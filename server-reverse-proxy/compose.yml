@@ -1,0 +1,49 @@
+# ----------------------------------------------------------------------------------------------------------
+# This is a Docker Compose file for setting up a Traefik reverse proxy with self-signed certificates.
+# ----------------------------------------------------------------------------------------------------------
+
+services:
+  #  =========================================================================================================
+  #  Traefik reverse proxy and load balancer
+  #  =========================================================================================================
+  service-traefik:
+    container_name: service-traefik
+    image: traefik:v3.3.4
+    restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
+    networks:
+      - reverse-proxy
+    ports:
+      - 127.0.0.2:80:80
+      - 127.0.0.2:443:443
+    environment:
+      TRAEFIK_DASHBOARD_CREDENTIALS: ${TRAEFIK_DASHBOARD_CREDENTIALS}
+
+    volumes:
+      - /etc/localtime:/etc/localtime:ro
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - ./application/traefik.yml:/traefik.yml:ro
+      - ./container-data/certificates/selfsigned.crt:/certificates/selfsigned.crt:ro
+      - ./container-data/certificates/selfsigned.key:/certificates/selfsigned.key:ro
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.traefik.entrypoints=http"
+      - "traefik.http.routers.traefik.rule=Host(`${TRAEFIK_HOSTNAME}`)"
+      - "traefik.http.middlewares.traefik-auth.basicauth.users=${TRAEFIK_DASHBOARD_CREDENTIALS}"
+      - "traefik.http.middlewares.traefik-https-redirect.redirectscheme.scheme=https"
+      - "traefik.http.middlewares.sslheader.headers.customrequestheaders.X-Forwarded-Proto=https"
+      - "traefik.http.routers.traefik.middlewares=traefik-https-redirect"
+      - "traefik.http.routers.traefik-secure.entrypoints=https"
+      - "traefik.http.routers.traefik-secure.rule=Host(`${TRAEFIK_HOSTNAME}`)"
+      - "traefik.http.routers.traefik-secure.middlewares=traefik-auth"
+      - "traefik.http.routers.traefik-secure.tls=true"
+      - "traefik.http.routers.traefik-secure.service=api@internal"
+
+#  =========================================================================================================
+#  Custom Proxy Network to attach all containers to it
+#  =========================================================================================================
+
+networks:
+  reverse-proxy:
+    external: true

@@ -1,0 +1,67 @@
+# ----------------------------------------------------------------------------------------------------------
+# This is a Docker Compose file for setting up a depends_on service.
+
+# ----------------------------------------------------------------------------------------------------------
+# WARNING:
+# This file is for local development and staging environments only.
+# DO NOT USE THIS FILE IN PRODUCTION ENVIRONMENTS.
+# ----------------------------------------------------------------------------------------------------------
+
+services:
+
+  service-minio:
+    container_name: "service-minio"
+    image: "quay.io/minio/minio:latest"
+    restart: unless-stopped
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=reverse-proxy"
+      # MinIO UI - HTTP Router (redirects to HTTPS)
+      - "traefik.http.routers.service-minio-ui.entrypoints=http"
+      - "traefik.http.routers.service-minio-ui.rule=Host(`${TRAEFIK_HOSTNAME}`)"
+      - "traefik.http.middlewares.service-minio-ui-https-redirect.redirectscheme.scheme=https"
+      - "traefik.http.routers.service-minio-ui.middlewares=service-minio-ui-https-redirect"
+      # MinIO UI - HTTPS Router
+      - "traefik.http.routers.service-minio-ui-secure.entrypoints=https"
+      - "traefik.http.routers.service-minio-ui-secure.rule=Host(`${TRAEFIK_HOSTNAME}`)"
+      - "traefik.http.routers.service-minio-ui-secure.tls=true"
+      - "traefik.http.routers.service-minio-ui-secure.service=service-minio-ui"
+      - "traefik.http.services.service-minio-ui.loadbalancer.server.port=9090"
+      - "traefik.http.services.service-minio-ui.loadbalancer.server.scheme=http"
+      # MinIO API - HTTP Router (redirects to HTTPS)
+      - "traefik.http.routers.service-minio-api.entrypoints=http"
+      - "traefik.http.routers.service-minio-api.rule=Host(`${TRAEFIK_HOSTNAME_API}`)"
+      - "traefik.http.middlewares.service-minio-api-https-redirect.redirectscheme.scheme=https"
+      - "traefik.http.routers.service-minio-api.middlewares=service-minio-api-https-redirect"
+      # MinIO API - HTTPS Router
+      - "traefik.http.routers.service-minio-api-secure.entrypoints=https"
+      - "traefik.http.routers.service-minio-api-secure.rule=Host(`${TRAEFIK_HOSTNAME_API}`)"
+      - "traefik.http.routers.service-minio-api-secure.tls=true"
+      - "traefik.http.routers.service-minio-api-secure.service=service-minio-api"
+      - "traefik.http.services.service-minio-api.loadbalancer.server.port=9000"
+      - "traefik.http.services.service-minio-api.loadbalancer.server.scheme=http"
+    ports:
+      - "5586:9000" # API
+      - "5587:9090" # Console & Web UI
+    networks:
+      - reverse-proxy
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD}
+    volumes:
+      - ./container-data/data:/data
+    command: server /data --console-address ":9090"
+
+  service-minio-setup:
+    container_name: "service-minio-setup"
+    image: "quay.io/minio/mc:latest"
+    restart: "no"
+    tty: true
+    depends_on:
+      - service-minio
+    networks:
+      - reverse-proxy
+
+networks:
+  reverse-proxy:
+    external: true

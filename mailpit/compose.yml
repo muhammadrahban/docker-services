@@ -1,0 +1,36 @@
+# ----------------------------------------------------------------------------------------------------------
+# This is a Docker Compose file for setting up a depends_on service.
+
+# ----------------------------------------------------------------------------------------------------------
+# WARNING:
+# This file is for local development and staging environments only.
+# DO NOT USE THIS FILE IN PRODUCTION ENVIRONMENTS.
+# ----------------------------------------------------------------------------------------------------------
+
+services:
+
+  service-mailpit:
+    container_name: "service-mailpit"
+    image: axllent/mailpit:latest
+    restart: unless-stopped
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=reverse-proxy"
+      - "traefik.http.routers.service-mailpit.rule=Host(`${TRAEFIK_HOSTNAME}`)"
+      - "traefik.http.routers.service-mailpit.entrypoints=https"
+      - "traefik.http.routers.service-mailpit.tls=true"
+      - "traefik.http.services.service-mailpit.loadbalancer.server.port=8025"
+      - "traefik.http.services.service-mailpit.loadbalancer.server.scheme=http"
+    environment:
+      MP_MAX_MESSAGES: ${MP_MAX_MESSAGES}
+      MP_SMTP_AUTH_ALLOW_INSECURE: ${MP_SMTP_AUTH_ALLOW_INSECURE}
+      MP_SMTP_AUTH_ACCEPT_ANY: ${MP_SMTP_AUTH_ACCEPT_ANY}
+    ports:
+      - "1025:1025" # SMTP
+      - "8025:8025" # Web UI
+    networks:
+      - reverse-proxy
+
+networks:
+  reverse-proxy:
+    external: true

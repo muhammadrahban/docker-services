@@ -1,0 +1,39 @@
+# ----------------------------------------------------------------------------------------------------------
+# This is a Docker Compose file for setting up a depends_on service.
+
+# ----------------------------------------------------------------------------------------------------------
+# WARNING:
+# This file is for local development and staging environments only.
+# DO NOT USE THIS FILE IN PRODUCTION ENVIRONMENTS.
+# ----------------------------------------------------------------------------------------------------------
+
+services:
+  service-pgadmin:
+    image: dpage/pgadmin4:latest
+    container_name: service-pgadmin
+    restart: unless-stopped
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=reverse-proxy"
+      # HTTP Router (redirects to HTTPS)
+      - "traefik.http.routers.service-pgadmin.entrypoints=http"
+      - "traefik.http.routers.service-pgadmin.rule=Host(`${TRAEFIK_HOSTNAME}`)"
+      - "traefik.http.middlewares.service-pgadmin-https-redirect.redirectscheme.scheme=https"
+      - "traefik.http.routers.service-pgadmin.middlewares=service-pgadmin-https-redirect"
+      # HTTPS Router
+      - "traefik.http.routers.service-pgadmin-secure.entrypoints=https"
+      - "traefik.http.routers.service-pgadmin-secure.rule=Host(`${TRAEFIK_HOSTNAME}`)"
+      - "traefik.http.routers.service-pgadmin-secure.tls=true"
+      - "traefik.http.services.service-pgadmin.loadbalancer.server.port=80"
+      - "traefik.http.services.service-pgadmin.loadbalancer.server.scheme=http"
+    environment:
+      PGADMIN_DEFAULT_EMAIL: ${PGADMIN_DEFAULT_EMAIL}
+      PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_DEFAULT_PASSWORD}
+    networks:
+      - reverse-proxy
+    ports:
+      - "5050:80"
+
+networks:
+  reverse-proxy:
+    external: true

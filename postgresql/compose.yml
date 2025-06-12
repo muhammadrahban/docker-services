@@ -1,0 +1,28 @@
+# ----------------------------------------------------------------------------------------------------------
+# This is a Docker Compose file for setting up a depends_on service.
+
+# ----------------------------------------------------------------------------------------------------------
+# WARNING:
+# This file is for local development and staging environments only.
+# DO NOT USE THIS FILE IN PRODUCTION ENVIRONMENTS.
+# ----------------------------------------------------------------------------------------------------------
+services:
+  service-postgresql:
+    image: postgres:17
+    container_name: service-postgresql
+    restart: unless-stopped
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    # PGDATA: /home/postgres/pgdata/data
+    networks:
+      - reverse-proxy
+    volumes:
+      - ./container-data/database:/var/lib/postgresql/data
+
+networks:
+  reverse-proxy:
+    external: true
