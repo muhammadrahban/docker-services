@@ -168,6 +168,7 @@ mkcert \
   s3.network.local.com \
   s3api.network.local.com \
   mail.network.local.com \
+  portainer.network.local.com \
   "*.network.local.com"
 
 # Move certificates to correct location
@@ -355,6 +356,7 @@ Add the following entries:
 ```bash
 # Traefik Services (using 127.0.0.2 to avoid conflicts with nginx on 127.0.0.1)
 127.0.0.2        traefik.network.local.com
+127.0.0.2        portainer.network.local.com
 
 # Database Admin Interfaces
 127.0.0.2        pga.network.local.com
