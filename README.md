@@ -15,6 +15,7 @@ This document provides a comprehensive step-by-step guide for setting up a compl
 - **phpMyAdmin** - MySQL administration interface
 - **MinIO** - S3-compatible object storage
 - **Mailpit** - Email testing tool
+- **Portainer** - Docker container management interface
 
 ---
 
@@ -116,6 +117,9 @@ git clone git@github.com:yourorg/phpmyadmin phpmyadmin
 # Clone storage and email services
 git clone git@github.com:yourorg/minio minio
 git clone git@github.com:yourorg/mailpit mailpit
+
+# Clone Portainer for container management
+git clone git@github.com:yourorg/portainer portainer
 ```
 
 **Alternative:** If SSH is not configured, use HTTPS:
@@ -194,6 +198,7 @@ nano .env
 ```
 
 Required variables:
+
 ```env
 TRAEFIK_HOSTNAME=traefik.network.local.com
 TRAEFIK_DASHBOARD_CREDENTIALS=treafik:$2y$10$... # Generated password hash
@@ -212,6 +217,7 @@ nano .env
 ```
 
 Configure PostgreSQL variables:
+
 ```env
 POSTGRES_DB=development
 POSTGRES_USER=postgres
@@ -229,6 +235,7 @@ nano .env
 ```
 
 Configure PgAdmin variables:
+
 ```env
 TRAEFIK_HOSTNAME=pga.network.local.com
 PGADMIN_DEFAULT_EMAIL=admin@example.com
@@ -246,6 +253,7 @@ nano .env
 ```
 
 Configure MySQL variables:
+
 ```env
 MYSQL_ROOT_PASSWORD=your_root_password
 MYSQL_DATABASE=development
@@ -264,6 +272,7 @@ nano .env
 ```
 
 Configure phpMyAdmin variables:
+
 ```env
 TRAEFIK_HOSTNAME=pma.network.local.com
 PMA_HOST=service-mysql
@@ -287,6 +296,7 @@ mkdir -p container-data/data
 ```
 
 Configure MinIO variables:
+
 ```env
 TRAEFIK_HOSTNAME=s3.network.local.com
 TRAEFIK_HOSTNAME_API=s3api.network.local.com
@@ -305,11 +315,29 @@ nano .env
 ```
 
 Configure Mailpit variables:
+
 ```env
 TRAEFIK_HOSTNAME=mail.network.local.com
 MP_MAX_MESSAGES=500
 MP_SMTP_AUTH_ALLOW_INSECURE=true
 MP_SMTP_AUTH_ACCEPT_ANY=true
+```
+
+### 8. Configure Portainer
+
+```shell
+cd ~/docker-service/portainer
+
+# Setup environment file
+cp .sample.env .env
+nano .env
+```
+
+Configure Portainer variables:
+
+```env
+TRAEFIK_HOSTNAME=portainer.network.local.com
+ADMIN_PASSWORD=your_admin_password
 ```
 
 ---
@@ -353,12 +381,14 @@ Add the following entries:
 ### Start Services in Order
 
 1. **Start Traefik first:**
+
 ```shell
 cd ~/docker-service/server-reverse-proxy
 docker compose up -d --build --force-recreate
 ```
 
 2. **Start database services:**
+
 ```shell
 cd ~/docker-service/postgresql
 docker compose up -d
@@ -368,6 +398,7 @@ docker compose up -d
 ```
 
 3. **Start admin interfaces:**
+
 ```shell
 cd ~/docker-service/pgadmin
 docker compose up -d
@@ -377,11 +408,19 @@ docker compose up -d
 ```
 
 4. **Start other services:**
+
 ```shell
 cd ~/docker-service/minio
 docker compose up -d
 
 cd ~/docker-service/mailpit
+docker compose up -d
+```
+
+5. **Start Portainer:**
+
+```shell
+cd ~/docker-service/portainer
 docker compose up -d
 ```
 
@@ -401,14 +440,15 @@ You should see all containers running without any exit codes.
 
 Once all services are running, you can access them via HTTPS:
 
-| Service | URL | Credentials |
-|---------|-----|-------------|
-| **Traefik Dashboard** | https://traefik.network.local.com/dashboard/ | treafik / 12345678 |
-| **PgAdmin** | https://pga.network.local.com | admin@example.com / your_admin_password |
-| **phpMyAdmin** | https://pma.network.local.com | root / your_root_password |
-| **MinIO Console** | https://s3.network.local.com | minioadmin / your_minio_password |
-| **MinIO API** | https://s3api.network.local.com | - |
-| **Mailpit** | https://mail.network.local.com | No authentication |
+| Service               | URL                                          | Credentials                             |
+| --------------------- | -------------------------------------------- | --------------------------------------- |
+| **Traefik Dashboard** | https://traefik.network.local.com/dashboard/ | treafik / 12345678                      |
+| **PgAdmin**           | https://pga.network.local.com                | admin@example.com / your_admin_password |
+| **phpMyAdmin**        | https://pma.network.local.com                | root / your_root_password               |
+| **MinIO Console**     | https://s3.network.local.com                 | minioadmin / your_minio_password        |
+| **MinIO API**         | https://s3api.network.local.com              | -                                       |
+| **Mailpit**           | https://mail.network.local.com               | No authentication                       |
+| **Portainer**         | https://portainer.network.local.com          | Create admin account on first visit     |
 
 ### SSL Certificate Status
 
@@ -421,6 +461,7 @@ All services should show a **green lock icon** in your browser, indicating trust
 ### Test Database Connectivity
 
 **PostgreSQL:**
+
 ```shell
 # Test from host
 psql -h 127.0.0.2 -p 5432 -U postgres -d development
@@ -430,6 +471,7 @@ psql -h 127.0.0.2 -p 5432 -U postgres -d development
 ```
 
 **MySQL:**
+
 ```shell
 # Test from host
 mysql -h 127.0.0.2 -P 3306 -u root -p
@@ -440,6 +482,7 @@ mysql -h 127.0.0.2 -P 3306 -u root -p
 ### Test Object Storage
 
 **MinIO:**
+
 ```shell
 # Install MinIO client
 curl https://dl.min.io/client/mc/release/linux-amd64/mc -o mc
@@ -457,6 +500,7 @@ mc ls local/
 ### Test Email
 
 **Mailpit:**
+
 ```shell
 # Send test email via SMTP (port 1025)
 echo "Test email body" | mail -s "Test Subject" -S smtp=127.0.0.2:1025 test@example.com
@@ -471,24 +515,27 @@ echo "Test email body" | mail -s "Test Subject" -S smtp=127.0.0.2:1025 test@exam
 ### Common Issues
 
 1. **Services not accessible via HTTPS:**
+
    ```shell
    # Check Traefik logs
    docker logs service-traefik
-   
+
    # Verify network connectivity
    docker network inspect reverse-proxy
    ```
 
 2. **SSL certificate warnings:**
+
    ```shell
    # Reinstall mkcert CA
    mkcert -install
-   
+
    # Restart browser completely
    killall chrome firefox 2>/dev/null || true
    ```
 
 3. **Port conflicts:**
+
    ```shell
    # Check what's using ports
    sudo netstat -tlnp | grep :80
@@ -551,12 +598,14 @@ docker network create reverse-proxy
 To add a new service to the platform:
 
 1. **Create service directory:**
+
 ```shell
 cd ~/docker-service
 git clone git@github.com:yourorg/new-service new-service
 ```
 
 2. **Configure Traefik labels in compose.yml:**
+
 ```yaml
 labels:
   - "traefik.enable=true"
@@ -574,11 +623,13 @@ labels:
 ```
 
 3. **Add to hosts file:**
+
 ```shell
 echo "127.0.0.2        new-service.network.local.com" | sudo tee -a /etc/hosts
 ```
 
 4. **Generate SSL certificate:**
+
 ```shell
 cd ~/docker-service/server-reverse-proxy
 mkcert new-service.network.local.com
@@ -586,6 +637,7 @@ mkcert new-service.network.local.com
 ```
 
 5. **Ensure network connectivity:**
+
 ```yaml
 networks:
   - reverse-proxy
