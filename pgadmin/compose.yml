@@ -33,6 +33,10 @@ services:
       - reverse-proxy
     ports:
       - "5050:80"
+    volumes:
+      - ./container-data/storage:/var/lib/pgadmin
+      - ./servers.json:/pgadmin4/servers.json
+      - ./pgpassfile:/tmp/pgpassfile:ro
 
 networks:
   reverse-proxy:

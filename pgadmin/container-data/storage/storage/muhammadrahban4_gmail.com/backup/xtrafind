@@ -1,0 +1,1581 @@
+--
+-- PostgreSQL database dump
+--
+
+-- Dumped from database version 17.5 (Debian 17.5-1.pgdg120+1)
+-- Dumped by pg_dump version 17.5
+
+-- Started on 2025-07-18 12:52:39 UTC
+
+SET statement_timeout = 0;
+SET lock_timeout = 0;
+SET idle_in_transaction_session_timeout = 0;
+SET transaction_timeout = 0;
+SET client_encoding = 'UTF8';
+SET standard_conforming_strings = on;
+SELECT pg_catalog.set_config('search_path', '', false);
+SET check_function_bodies = false;
+SET xmloption = content;
+SET client_min_messages = warning;
+SET row_security = off;
+
+--
+-- TOC entry 5 (class 2615 OID 16418)
+-- Name: public; Type: SCHEMA; Schema: -; Owner: postgres
+--
+
+-- *not* creating schema, since initdb creates it
+
+
+ALTER SCHEMA public OWNER TO postgres;
+
+--
+-- TOC entry 3567 (class 0 OID 0)
+-- Dependencies: 5
+-- Name: SCHEMA public; Type: COMMENT; Schema: -; Owner: postgres
+--
+
+COMMENT ON SCHEMA public IS '';
+
+
+--
+-- TOC entry 872 (class 1247 OID 16493)
+-- Name: enum_chats_type; Type: TYPE; Schema: public; Owner: postgres
+--
+
+CREATE TYPE public.enum_chats_type AS ENUM (
+    'private',
+    'group',
+    'broadcast'
+);
+
+
+ALTER TYPE public.enum_chats_type OWNER TO postgres;
+
+--
+-- TOC entry 884 (class 1247 OID 24713)
+-- Name: enum_contact_us_status; Type: TYPE; Schema: public; Owner: postgres
+--
+
+CREATE TYPE public.enum_contact_us_status AS ENUM (
+    'pending',
+    'resolved',
+    'closed'
+);
+
+
+ALTER TYPE public.enum_contact_us_status OWNER TO postgres;
+
+--
+-- TOC entry 875 (class 1247 OID 16521)
+-- Name: enum_messages_message_type; Type: TYPE; Schema: public; Owner: postgres
+--
+
+CREATE TYPE public.enum_messages_message_type AS ENUM (
+    'text',
+    'image',
+    'video',
+    'audio',
+    'file',
+    'location'
+);
+
+
+ALTER TYPE public.enum_messages_message_type OWNER TO postgres;
+
+--
+-- TOC entry 881 (class 1247 OID 24651)
+-- Name: enum_user_devices_device_type; Type: TYPE; Schema: public; Owner: postgres
+--
+
+CREATE TYPE public.enum_user_devices_device_type AS ENUM (
+    'ios',
+    'android',
+    'web',
+    'other'
+);
+
+
+ALTER TYPE public.enum_user_devices_device_type OWNER TO postgres;
+
+--
+-- TOC entry 896 (class 1247 OID 34379)
+-- Name: enum_users_gender; Type: TYPE; Schema: public; Owner: postgres
+--
+
+CREATE TYPE public.enum_users_gender AS ENUM (
+    'male',
+    'female',
+    'other'
+);
+
+
+ALTER TYPE public.enum_users_gender OWNER TO postgres;
+
+--
+-- TOC entry 869 (class 1247 OID 16458)
+-- Name: enum_users_provider; Type: TYPE; Schema: public; Owner: postgres
+--
+
+CREATE TYPE public.enum_users_provider AS ENUM (
+    'local',
+    'google',
+    'facebook',
+    'apple'
+);
+
+
+ALTER TYPE public.enum_users_provider OWNER TO postgres;
+
+--
+-- TOC entry 902 (class 1247 OID 34396)
+-- Name: enum_users_user_role; Type: TYPE; Schema: public; Owner: postgres
+--
+
+CREATE TYPE public.enum_users_user_role AS ENUM (
+    'user',
+    'admin'
+);
+
+
+ALTER TYPE public.enum_users_user_role OWNER TO postgres;
+
+--
+-- TOC entry 899 (class 1247 OID 34386)
+-- Name: enum_users_user_type; Type: TYPE; Schema: public; Owner: postgres
+--
+
+CREATE TYPE public.enum_users_user_type AS ENUM (
+    'user',
+    'vender',
+    'admin',
+    'super_admin'
+);
+
+
+ALTER TYPE public.enum_users_user_type OWNER TO postgres;
+
+SET default_tablespace = '';
+
+SET default_table_access_method = heap;
+
+--
+-- TOC entry 226 (class 1259 OID 34362)
+-- Name: categories; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE public.categories (
+    id integer NOT NULL,
+    category_id integer DEFAULT 0,
+    title character varying(255) NOT NULL,
+    icon character varying(255) NOT NULL,
+    thumbnail character varying(255) NOT NULL,
+    created_at timestamp with time zone DEFAULT CURRENT_TIMESTAMP,
+    updated_at timestamp with time zone DEFAULT CURRENT_TIMESTAMP,
+    deleted_at timestamp with time zone
+);
+
+
+ALTER TABLE public.categories OWNER TO postgres;
+
+--
+-- TOC entry 225 (class 1259 OID 34361)
+-- Name: categories_id_seq; Type: SEQUENCE; Schema: public; Owner: postgres
+--
+
+CREATE SEQUENCE public.categories_id_seq
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+ALTER SEQUENCE public.categories_id_seq OWNER TO postgres;
+
+--
+-- TOC entry 3569 (class 0 OID 0)
+-- Dependencies: 225
+-- Name: categories_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
+--
+
+ALTER SEQUENCE public.categories_id_seq OWNED BY public.categories.id;
+
+
+--
+-- TOC entry 236 (class 1259 OID 34503)
+-- Name: contact_us; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE public.contact_us (
+    id integer NOT NULL,
+    user_id integer,
+    name character varying(255) NOT NULL,
+    email character varying(255) NOT NULL,
+    subject character varying(255) NOT NULL,
+    message text NOT NULL,
+    status public.enum_contact_us_status DEFAULT 'pending'::public.enum_contact_us_status,
+    created_at timestamp with time zone DEFAULT CURRENT_TIMESTAMP,
+    updated_at timestamp with time zone DEFAULT CURRENT_TIMESTAMP,
+    deleted_at timestamp with time zone
+);
+
+
+ALTER TABLE public.contact_us OWNER TO postgres;
+
+--
+-- TOC entry 235 (class 1259 OID 34502)
+-- Name: contact_us_id_seq; Type: SEQUENCE; Schema: public; Owner: postgres
+--
+
+CREATE SEQUENCE public.contact_us_id_seq
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+ALTER SEQUENCE public.contact_us_id_seq OWNER TO postgres;
+
+--
+-- TOC entry 3570 (class 0 OID 0)
+-- Dependencies: 235
+-- Name: contact_us_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
+--
+
+ALTER SEQUENCE public.contact_us_id_seq OWNED BY public.contact_us.id;
+
+
+--
+-- TOC entry 234 (class 1259 OID 34490)
+-- Name: contents; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE public.contents (
+    id integer NOT NULL,
+    name character varying(255) NOT NULL,
+    slug character varying(255) NOT NULL,
+    description text,
+    created_at timestamp with time zone DEFAULT CURRENT_TIMESTAMP,
+    updated_at timestamp with time zone DEFAULT CURRENT_TIMESTAMP,
+    deleted_at timestamp with time zone
+);
+
+
+ALTER TABLE public.contents OWNER TO postgres;
+
+--
+-- TOC entry 233 (class 1259 OID 34489)
+-- Name: contents_id_seq; Type: SEQUENCE; Schema: public; Owner: postgres
+--
+
+CREATE SEQUENCE public.contents_id_seq
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+ALTER SEQUENCE public.contents_id_seq OWNER TO postgres;
+
+--
+-- TOC entry 3571 (class 0 OID 0)
+-- Dependencies: 233
+-- Name: contents_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
+--
+
+ALTER SEQUENCE public.contents_id_seq OWNED BY public.contents.id;
+
+
+--
+-- TOC entry 240 (class 1259 OID 34535)
+-- Name: galleries; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE public.galleries (
+    id integer NOT NULL,
+    user_id integer NOT NULL,
+    title character varying(255) NOT NULL,
+    media_url character varying(255) NOT NULL,
+    media_type character varying(255) NOT NULL,
+    created_at timestamp with time zone DEFAULT CURRENT_TIMESTAMP,
+    updated_at timestamp with time zone DEFAULT CURRENT_TIMESTAMP,
+    deleted_at timestamp with time zone
+);
+
+
+ALTER TABLE public.galleries OWNER TO postgres;
+
+--
+-- TOC entry 239 (class 1259 OID 34534)
+-- Name: galleries_id_seq; Type: SEQUENCE; Schema: public; Owner: postgres
+--
+
+CREATE SEQUENCE public.galleries_id_seq
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+ALTER SEQUENCE public.galleries_id_seq OWNER TO postgres;
+
+--
+-- TOC entry 3572 (class 0 OID 0)
+-- Dependencies: 239
+-- Name: galleries_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
+--
+
+ALTER SEQUENCE public.galleries_id_seq OWNED BY public.galleries.id;
+
+
+--
+-- TOC entry 224 (class 1259 OID 34350)
+-- Name: languages; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE public.languages (
+    id integer NOT NULL,
+    name character varying(255) NOT NULL,
+    code character varying(5) NOT NULL,
+    is_active boolean DEFAULT true,
+    created_at timestamp with time zone DEFAULT CURRENT_TIMESTAMP,
+    updated_at timestamp with time zone DEFAULT CURRENT_TIMESTAMP,
+    deleted_at timestamp with time zone
+);
+
+
+ALTER TABLE public.languages OWNER TO postgres;
+
+--
+-- TOC entry 223 (class 1259 OID 34349)
+-- Name: languages_id_seq; Type: SEQUENCE; Schema: public; Owner: postgres
+--
+
+CREATE SEQUENCE public.languages_id_seq
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+ALTER SEQUENCE public.languages_id_seq OWNER TO postgres;
+
+--
+-- TOC entry 3573 (class 0 OID 0)
+-- Dependencies: 223
+-- Name: languages_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
+--
+
+ALTER SEQUENCE public.languages_id_seq OWNED BY public.languages.id;
+
+
+--
+-- TOC entry 218 (class 1259 OID 16567)
+-- Name: migrations; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE public.migrations (
+    id integer NOT NULL,
+    migration character varying(255) NOT NULL,
+    batch integer NOT NULL,
+    executed_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP
+);
+
+
+ALTER TABLE public.migrations OWNER TO postgres;
+
+--
+-- TOC entry 217 (class 1259 OID 16566)
+-- Name: migrations_id_seq; Type: SEQUENCE; Schema: public; Owner: postgres
+--
+
+CREATE SEQUENCE public.migrations_id_seq
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+ALTER SEQUENCE public.migrations_id_seq OWNER TO postgres;
+
+--
+-- TOC entry 3574 (class 0 OID 0)
+-- Dependencies: 217
+-- Name: migrations_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
+--
+
+ALTER SEQUENCE public.migrations_id_seq OWNED BY public.migrations.id;
+
+
+--
+-- TOC entry 232 (class 1259 OID 34468)
+-- Name: notifications; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE public.notifications (
+    id integer NOT NULL,
+    user_id integer NOT NULL,
+    title character varying(255) NOT NULL,
+    body text NOT NULL,
+    objectable_type character varying(255) NOT NULL,
+    objectable_id integer NOT NULL,
+    actor_id integer,
+    actor_type character varying(255),
+    viewed boolean DEFAULT false,
+    created_at timestamp with time zone DEFAULT CURRENT_TIMESTAMP,
+    updated_at timestamp with time zone DEFAULT CURRENT_TIMESTAMP,
+    deleted_at timestamp with time zone
+);
+
+
+ALTER TABLE public.notifications OWNER TO postgres;
+
+--
+-- TOC entry 231 (class 1259 OID 34467)
+-- Name: notifications_id_seq; Type: SEQUENCE; Schema: public; Owner: postgres
+--
+
+CREATE SEQUENCE public.notifications_id_seq
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+ALTER SEQUENCE public.notifications_id_seq OWNER TO postgres;
+
+--
+-- TOC entry 3575 (class 0 OID 0)
+-- Dependencies: 231
+-- Name: notifications_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
+--
+
+ALTER SEQUENCE public.notifications_id_seq OWNED BY public.notifications.id;
+
+
+--
+-- TOC entry 222 (class 1259 OID 34336)
+-- Name: regions; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE public.regions (
+    id integer NOT NULL,
+    name character varying(255) NOT NULL,
+    code character varying(10) NOT NULL,
+    flag character varying(255),
+    is_active boolean DEFAULT true,
+    created_at timestamp with time zone DEFAULT CURRENT_TIMESTAMP,
+    updated_at timestamp with time zone DEFAULT CURRENT_TIMESTAMP,
+    deleted_at timestamp with time zone
+);
+
+
+ALTER TABLE public.regions OWNER TO postgres;
+
+--
+-- TOC entry 221 (class 1259 OID 34335)
+-- Name: regions_id_seq; Type: SEQUENCE; Schema: public; Owner: postgres
+--
+
+CREATE SEQUENCE public.regions_id_seq
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+ALTER SEQUENCE public.regions_id_seq OWNER TO postgres;
+
+--
+-- TOC entry 3576 (class 0 OID 0)
+-- Dependencies: 221
+-- Name: regions_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
+--
+
+ALTER SEQUENCE public.regions_id_seq OWNED BY public.regions.id;
+
+
+--
+-- TOC entry 238 (class 1259 OID 34520)
+-- Name: schedules; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE public.schedules (
+    id integer NOT NULL,
+    user_id integer NOT NULL,
+    day character varying(255),
+    start_time time without time zone,
+    end_time time without time zone,
+    is_active boolean DEFAULT true,
+    created_at timestamp with time zone DEFAULT CURRENT_TIMESTAMP,
+    updated_at timestamp with time zone DEFAULT CURRENT_TIMESTAMP,
+    deleted_at timestamp with time zone
+);
+
+
+ALTER TABLE public.schedules OWNER TO postgres;
+
+--
+-- TOC entry 237 (class 1259 OID 34519)
+-- Name: schedules_id_seq; Type: SEQUENCE; Schema: public; Owner: postgres
+--
+
+CREATE SEQUENCE public.schedules_id_seq
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+ALTER SEQUENCE public.schedules_id_seq OWNER TO postgres;
+
+--
+-- TOC entry 3577 (class 0 OID 0)
+-- Dependencies: 237
+-- Name: schedules_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
+--
+
+ALTER SEQUENCE public.schedules_id_seq OWNED BY public.schedules.id;
+
+
+--
+-- TOC entry 220 (class 1259 OID 33202)
+-- Name: seeders; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE public.seeders (
+    id integer NOT NULL,
+    seeder character varying(255) NOT NULL,
+    batch integer NOT NULL,
+    executed_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP
+);
+
+
+ALTER TABLE public.seeders OWNER TO postgres;
+
+--
+-- TOC entry 219 (class 1259 OID 33201)
+-- Name: seeders_id_seq; Type: SEQUENCE; Schema: public; Owner: postgres
+--
+
+CREATE SEQUENCE public.seeders_id_seq
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+ALTER SEQUENCE public.seeders_id_seq OWNER TO postgres;
+
+--
+-- TOC entry 3578 (class 0 OID 0)
+-- Dependencies: 219
+-- Name: seeders_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
+--
+
+ALTER SEQUENCE public.seeders_id_seq OWNED BY public.seeders.id;
+
+
+--
+-- TOC entry 230 (class 1259 OID 34452)
+-- Name: user_devices; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE public.user_devices (
+    id integer NOT NULL,
+    user_id integer NOT NULL,
+    udid character varying(255) NOT NULL,
+    device_token character varying(255),
+    device_type public.enum_user_devices_device_type NOT NULL,
+    access_token character varying(255),
+    device_brand character varying(255),
+    device_os character varying(255),
+    app_version character varying(255),
+    created_at timestamp with time zone DEFAULT CURRENT_TIMESTAMP,
+    updated_at timestamp with time zone DEFAULT CURRENT_TIMESTAMP,
+    deleted_at timestamp with time zone
+);
+
+
+ALTER TABLE public.user_devices OWNER TO postgres;
+
+--
+-- TOC entry 229 (class 1259 OID 34451)
+-- Name: user_devices_id_seq; Type: SEQUENCE; Schema: public; Owner: postgres
+--
+
+CREATE SEQUENCE public.user_devices_id_seq
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+ALTER SEQUENCE public.user_devices_id_seq OWNER TO postgres;
+
+--
+-- TOC entry 3579 (class 0 OID 0)
+-- Dependencies: 229
+-- Name: user_devices_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
+--
+
+ALTER SEQUENCE public.user_devices_id_seq OWNED BY public.user_devices.id;
+
+
+--
+-- TOC entry 228 (class 1259 OID 34402)
+-- Name: users; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE public.users (
+    id integer NOT NULL,
+    full_name character varying(255),
+    user_name character varying(255),
+    email character varying(255) NOT NULL,
+    password character varying(255),
+    provider_id character varying(255),
+    provider character varying(255) DEFAULT 'local'::character varying,
+    phone_number character varying(255),
+    whatsapp_number character varying(255),
+    website_url character varying(255),
+    gender public.enum_users_gender,
+    dob date,
+    bio text,
+    about text,
+    profile_image character varying(255),
+    background_image character varying(255),
+    category_id integer,
+    referal_id integer,
+    region_id integer,
+    language_id integer,
+    address character varying(255),
+    country character varying(255),
+    state character varying(255),
+    city character varying(255),
+    latitude double precision,
+    longitude double precision,
+    verification_token integer,
+    invitation_code character varying(255),
+    balance double precision DEFAULT '0'::double precision,
+    user_type public.enum_users_user_type DEFAULT 'user'::public.enum_users_user_type,
+    user_role public.enum_users_user_role DEFAULT 'user'::public.enum_users_user_role,
+    is_email_verified boolean DEFAULT false,
+    is_phone_verified boolean DEFAULT false,
+    is_active boolean DEFAULT true,
+    is_notify boolean DEFAULT true,
+    created_at timestamp with time zone DEFAULT CURRENT_TIMESTAMP,
+    updated_at timestamp with time zone DEFAULT CURRENT_TIMESTAMP,
+    deleted_at timestamp with time zone
+);
+
+
+ALTER TABLE public.users OWNER TO postgres;
+
+--
+-- TOC entry 227 (class 1259 OID 34401)
+-- Name: users_id_seq; Type: SEQUENCE; Schema: public; Owner: postgres
+--
+
+CREATE SEQUENCE public.users_id_seq
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+ALTER SEQUENCE public.users_id_seq OWNER TO postgres;
+
+--
+-- TOC entry 3580 (class 0 OID 0)
+-- Dependencies: 227
+-- Name: users_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
+--
+
+ALTER SEQUENCE public.users_id_seq OWNED BY public.users.id;
+
+
+--
+-- TOC entry 3301 (class 2604 OID 34365)
+-- Name: categories id; Type: DEFAULT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.categories ALTER COLUMN id SET DEFAULT nextval('public.categories_id_seq'::regclass);
+
+
+--
+-- TOC entry 3326 (class 2604 OID 34506)
+-- Name: contact_us id; Type: DEFAULT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.contact_us ALTER COLUMN id SET DEFAULT nextval('public.contact_us_id_seq'::regclass);
+
+
+--
+-- TOC entry 3323 (class 2604 OID 34493)
+-- Name: contents id; Type: DEFAULT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.contents ALTER COLUMN id SET DEFAULT nextval('public.contents_id_seq'::regclass);
+
+
+--
+-- TOC entry 3334 (class 2604 OID 34538)
+-- Name: galleries id; Type: DEFAULT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.galleries ALTER COLUMN id SET DEFAULT nextval('public.galleries_id_seq'::regclass);
+
+
+--
+-- TOC entry 3297 (class 2604 OID 34353)
+-- Name: languages id; Type: DEFAULT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.languages ALTER COLUMN id SET DEFAULT nextval('public.languages_id_seq'::regclass);
+
+
+--
+-- TOC entry 3289 (class 2604 OID 16570)
+-- Name: migrations id; Type: DEFAULT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.migrations ALTER COLUMN id SET DEFAULT nextval('public.migrations_id_seq'::regclass);
+
+
+--
+-- TOC entry 3319 (class 2604 OID 34471)
+-- Name: notifications id; Type: DEFAULT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.notifications ALTER COLUMN id SET DEFAULT nextval('public.notifications_id_seq'::regclass);
+
+
+--
+-- TOC entry 3293 (class 2604 OID 34339)
+-- Name: regions id; Type: DEFAULT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.regions ALTER COLUMN id SET DEFAULT nextval('public.regions_id_seq'::regclass);
+
+
+--
+-- TOC entry 3330 (class 2604 OID 34523)
+-- Name: schedules id; Type: DEFAULT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.schedules ALTER COLUMN id SET DEFAULT nextval('public.schedules_id_seq'::regclass);
+
+
+--
+-- TOC entry 3291 (class 2604 OID 33205)
+-- Name: seeders id; Type: DEFAULT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.seeders ALTER COLUMN id SET DEFAULT nextval('public.seeders_id_seq'::regclass);
+
+
+--
+-- TOC entry 3316 (class 2604 OID 34455)
+-- Name: user_devices id; Type: DEFAULT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.user_devices ALTER COLUMN id SET DEFAULT nextval('public.user_devices_id_seq'::regclass);
+
+
+--
+-- TOC entry 3305 (class 2604 OID 34405)
+-- Name: users id; Type: DEFAULT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.users ALTER COLUMN id SET DEFAULT nextval('public.users_id_seq'::regclass);
+
+
+--
+-- TOC entry 3547 (class 0 OID 34362)
+-- Dependencies: 226
+-- Data for Name: categories; Type: TABLE DATA; Schema: public; Owner: postgres
+--
+
+COPY public.categories (id, category_id, title, icon, thumbnail, created_at, updated_at, deleted_at) FROM stdin;
+1	\N	Life Style	category/life_style.svg		2025-07-18 01:13:51.252+00	2025-07-18 01:13:51.252+00	\N
+2	\N	Food	category/food.svg		2025-07-18 01:13:51.252+00	2025-07-18 01:13:51.252+00	\N
+3	\N	Groceries	category/groceries.svg		2025-07-18 01:13:51.252+00	2025-07-18 01:13:51.252+00	\N
+4	\N	Wears	category/wears.svg		2025-07-18 01:13:51.252+00	2025-07-18 01:13:51.252+00	\N
+5	\N	Health	category/health.svg		2025-07-18 01:13:51.252+00	2025-07-18 01:13:51.252+00	\N
+6	\N	Real Estate	category/real_state.svg		2025-07-18 01:13:51.252+00	2025-07-18 01:13:51.252+00	\N
+7	\N	Events	category/events.svg		2025-07-18 01:13:51.252+00	2025-07-18 01:13:51.252+00	\N
+8	\N	Others	category/others.svg		2025-07-18 01:13:51.252+00	2025-07-18 01:13:51.252+00	\N
+9	1	Hotels		category/hotels.png	2025-07-18 01:13:51.263+00	2025-07-18 01:13:51.263+00	\N
+10	1	SPA		category/spa.png	2025-07-18 01:13:51.263+00	2025-07-18 01:13:51.263+00	\N
+11	1	Salons		category/salons.png	2025-07-18 01:13:51.263+00	2025-07-18 01:13:51.263+00	\N
+12	2	order your food		category/order-food.png	2025-07-18 01:13:51.264+00	2025-07-18 01:13:51.264+00	\N
+13	2	Restaurants Reservation		category/restaurant-reservation.png	2025-07-18 01:13:51.264+00	2025-07-18 01:13:51.264+00	\N
+14	8	Electronics		category/electronics.png	2025-07-18 01:13:51.266+00	2025-07-18 01:13:51.266+00	\N
+15	8	Interior		category/interior.png	2025-07-18 01:13:51.266+00	2025-07-18 01:13:51.266+00	\N
+\.
+
+
+--
+-- TOC entry 3557 (class 0 OID 34503)
+-- Dependencies: 236
+-- Data for Name: contact_us; Type: TABLE DATA; Schema: public; Owner: postgres
+--
+
+COPY public.contact_us (id, user_id, name, email, subject, message, status, created_at, updated_at, deleted_at) FROM stdin;
+\.
+
+
+--
+-- TOC entry 3555 (class 0 OID 34490)
+-- Dependencies: 234
+-- Data for Name: contents; Type: TABLE DATA; Schema: public; Owner: postgres
+--
+
+COPY public.contents (id, name, slug, description, created_at, updated_at, deleted_at) FROM stdin;
+1	Privacy Policy	privacy-policy	Our comprehensive privacy policy outlines how we collect, use, and protect your personal information. We are committed to maintaining the highest standards of data protection and transparency. This document explains your rights regarding your data and how you can control your privacy settings. We regularly update this policy to reflect changes in our practices and legal requirements.	2025-07-18 01:13:51.275+00	2025-07-18 01:13:51.275+00	\N
+2	Terms & Conditions	terms-conditions	These terms and conditions govern your use of our website and services. By accessing or using our platform, you agree to be bound by these terms. The document covers user responsibilities, service limitations, payment terms, and dispute resolution procedures. Please read these terms carefully as they contain important information about your legal rights and obligations.	2025-07-18 01:13:51.275+00	2025-07-18 01:13:51.275+00	\N
+3	About	about	Learn more about our company, mission, and the team behind our innovative solutions. We are dedicated to providing exceptional services and building lasting relationships with our clients. Our story began with a vision to transform the industry through cutting-edge technology and customer-centric approaches. Discover our values, achievements, and commitment to excellence in everything we do.	2025-07-18 01:13:51.275+00	2025-07-18 01:13:51.275+00	\N
+\.
+
+
+--
+-- TOC entry 3561 (class 0 OID 34535)
+-- Dependencies: 240
+-- Data for Name: galleries; Type: TABLE DATA; Schema: public; Owner: postgres
+--
+
+COPY public.galleries (id, user_id, title, media_url, media_type, created_at, updated_at, deleted_at) FROM stdin;
+\.
+
+
+--
+-- TOC entry 3545 (class 0 OID 34350)
+-- Dependencies: 224
+-- Data for Name: languages; Type: TABLE DATA; Schema: public; Owner: postgres
+--
+
+COPY public.languages (id, name, code, is_active, created_at, updated_at, deleted_at) FROM stdin;
+1	English	en	t	2025-07-18 01:13:46.741+00	2025-07-18 01:13:46.741+00	\N
+\.
+
+
+--
+-- TOC entry 3539 (class 0 OID 16567)
+-- Dependencies: 218
+-- Data for Name: migrations; Type: TABLE DATA; Schema: public; Owner: postgres
+--
+
+COPY public.migrations (id, migration, batch, executed_at) FROM stdin;
+99	20250601000001_create_regions_table.js	1	2025-07-18 01:13:46.736617
+100	20250601000002_create_languages_table.js	1	2025-07-18 01:13:46.74605
+101	20250608000002_create_categories_table.js	1	2025-07-18 01:13:46.751445
+102	20250612000001_create_user_enums.js	1	2025-07-18 01:13:46.755835
+103	20250613000003_create_users_table.js	1	2025-07-18 01:13:46.774949
+104	20250613051218_create_user_devices_table.js	1	2025-07-18 01:13:46.780244
+105	20250613051453_create_notifications_table.js	1	2025-07-18 01:13:46.785401
+106	20250613052054_create_contents_table.js	1	2025-07-18 01:13:46.788891
+107	20250613052246_create_contact_us_table.js	1	2025-07-18 01:13:46.793563
+108	20250708094818_create_schedules_table.js	1	2025-07-18 01:13:46.79689
+109	20250714213111_create_galleries_table.js	1	2025-07-18 01:13:46.802156
+\.
+
+
+--
+-- TOC entry 3553 (class 0 OID 34468)
+-- Dependencies: 232
+-- Data for Name: notifications; Type: TABLE DATA; Schema: public; Owner: postgres
+--
+
+COPY public.notifications (id, user_id, title, body, objectable_type, objectable_id, actor_id, actor_type, viewed, created_at, updated_at, deleted_at) FROM stdin;
+\.
+
+
+--
+-- TOC entry 3543 (class 0 OID 34336)
+-- Dependencies: 222
+-- Data for Name: regions; Type: TABLE DATA; Schema: public; Owner: postgres
+--
+
+COPY public.regions (id, name, code, flag, is_active, created_at, updated_at, deleted_at) FROM stdin;
+1	Nigeria	NG	flags/nigeria.png	t	2025-07-18 01:13:51.269+00	2025-07-18 01:13:51.269+00	\N
+2	United Kingdom	GB	flags/english.png	t	2025-07-18 01:13:51.269+00	2025-07-18 01:13:51.269+00	\N
+\.
+
+
+--
+-- TOC entry 3559 (class 0 OID 34520)
+-- Dependencies: 238
+-- Data for Name: schedules; Type: TABLE DATA; Schema: public; Owner: postgres
+--
+
+COPY public.schedules (id, user_id, day, start_time, end_time, is_active, created_at, updated_at, deleted_at) FROM stdin;
+1	8	Monday	09:00:00	20:00:00	t	2025-07-18 02:49:44.546+00	2025-07-18 02:49:44.546+00	\N
+2	8	Tuesday	09:00:00	20:00:00	t	2025-07-18 02:49:44.546+00	2025-07-18 02:49:44.546+00	\N
+3	8	Wednesday	09:00:00	20:00:00	t	2025-07-18 02:49:44.546+00	2025-07-18 02:49:44.546+00	\N
+4	8	Thursday	09:00:00	20:00:00	t	2025-07-18 02:49:44.546+00	2025-07-18 02:49:44.546+00	\N
+5	8	Friday	09:00:00	20:00:00	t	2025-07-18 02:49:44.546+00	2025-07-18 02:49:44.546+00	\N
+6	8	Saturday	09:00:00	20:00:00	t	2025-07-18 02:49:44.546+00	2025-07-18 02:49:44.546+00	\N
+7	8	Sunday	10:00:00	18:00:00	t	2025-07-18 02:49:44.546+00	2025-07-18 02:49:44.546+00	\N
+8	9	Monday	09:00:00	20:00:00	t	2025-07-18 02:49:44.546+00	2025-07-18 02:49:44.546+00	\N
+9	9	Tuesday	09:00:00	20:00:00	t	2025-07-18 02:49:44.546+00	2025-07-18 02:49:44.546+00	\N
+10	9	Wednesday	09:00:00	20:00:00	t	2025-07-18 02:49:44.546+00	2025-07-18 02:49:44.546+00	\N
+11	9	Thursday	09:00:00	20:00:00	t	2025-07-18 02:49:44.546+00	2025-07-18 02:49:44.546+00	\N
+12	9	Friday	09:00:00	20:00:00	t	2025-07-18 02:49:44.546+00	2025-07-18 02:49:44.546+00	\N
+13	9	Saturday	09:00:00	20:00:00	t	2025-07-18 02:49:44.546+00	2025-07-18 02:49:44.546+00	\N
+14	9	Sunday	10:00:00	18:00:00	t	2025-07-18 02:49:44.546+00	2025-07-18 02:49:44.546+00	\N
+15	10	Monday	09:00:00	20:00:00	t	2025-07-18 02:49:44.546+00	2025-07-18 02:49:44.546+00	\N
+16	10	Tuesday	09:00:00	20:00:00	t	2025-07-18 02:49:44.546+00	2025-07-18 02:49:44.546+00	\N
+17	10	Wednesday	09:00:00	20:00:00	t	2025-07-18 02:49:44.546+00	2025-07-18 02:49:44.546+00	\N
+18	10	Thursday	09:00:00	20:00:00	t	2025-07-18 02:49:44.546+00	2025-07-18 02:49:44.546+00	\N
+19	10	Friday	09:00:00	20:00:00	t	2025-07-18 02:49:44.546+00	2025-07-18 02:49:44.546+00	\N
+20	10	Saturday	09:00:00	20:00:00	t	2025-07-18 02:49:44.546+00	2025-07-18 02:49:44.546+00	\N
+21	10	Sunday	10:00:00	18:00:00	t	2025-07-18 02:49:44.546+00	2025-07-18 02:49:44.546+00	\N
+22	11	Monday	09:00:00	20:00:00	t	2025-07-18 02:49:44.546+00	2025-07-18 02:49:44.546+00	\N
+23	11	Tuesday	09:00:00	20:00:00	t	2025-07-18 02:49:44.546+00	2025-07-18 02:49:44.546+00	\N
+24	11	Wednesday	09:00:00	20:00:00	t	2025-07-18 02:49:44.546+00	2025-07-18 02:49:44.546+00	\N
+25	11	Thursday	09:00:00	20:00:00	t	2025-07-18 02:49:44.546+00	2025-07-18 02:49:44.546+00	\N
+26	11	Friday	09:00:00	20:00:00	t	2025-07-18 02:49:44.546+00	2025-07-18 02:49:44.546+00	\N
+27	11	Saturday	09:00:00	20:00:00	t	2025-07-18 02:49:44.546+00	2025-07-18 02:49:44.546+00	\N
+28	11	Sunday	10:00:00	18:00:00	t	2025-07-18 02:49:44.546+00	2025-07-18 02:49:44.546+00	\N
+29	12	Monday	09:00:00	20:00:00	t	2025-07-18 02:49:44.546+00	2025-07-18 02:49:44.546+00	\N
+30	12	Tuesday	09:00:00	20:00:00	t	2025-07-18 02:49:44.546+00	2025-07-18 02:49:44.546+00	\N
+31	12	Wednesday	09:00:00	20:00:00	t	2025-07-18 02:49:44.546+00	2025-07-18 02:49:44.546+00	\N
+32	12	Thursday	09:00:00	20:00:00	t	2025-07-18 02:49:44.546+00	2025-07-18 02:49:44.546+00	\N
+33	12	Friday	09:00:00	20:00:00	t	2025-07-18 02:49:44.546+00	2025-07-18 02:49:44.546+00	\N
+34	12	Saturday	09:00:00	20:00:00	t	2025-07-18 02:49:44.546+00	2025-07-18 02:49:44.546+00	\N
+35	12	Sunday	10:00:00	18:00:00	t	2025-07-18 02:49:44.546+00	2025-07-18 02:49:44.546+00	\N
+36	13	Tuesday	09:00:00	21:00:00	t	2025-07-18 02:49:44.546+00	2025-07-18 02:49:44.546+00	\N
+37	13	Wednesday	09:00:00	21:00:00	t	2025-07-18 02:49:44.546+00	2025-07-18 02:49:44.546+00	\N
+38	13	Thursday	09:00:00	21:00:00	t	2025-07-18 02:49:44.546+00	2025-07-18 02:49:44.546+00	\N
+39	13	Friday	09:00:00	21:00:00	t	2025-07-18 02:49:44.546+00	2025-07-18 02:49:44.546+00	\N
+40	13	Saturday	09:00:00	21:00:00	t	2025-07-18 02:49:44.546+00	2025-07-18 02:49:44.546+00	\N
+41	13	Sunday	10:00:00	18:00:00	t	2025-07-18 02:49:44.546+00	2025-07-18 02:49:44.546+00	\N
+42	14	Tuesday	09:00:00	21:00:00	t	2025-07-18 02:49:44.546+00	2025-07-18 02:49:44.546+00	\N
+43	14	Wednesday	09:00:00	21:00:00	t	2025-07-18 02:49:44.546+00	2025-07-18 02:49:44.546+00	\N
+44	14	Thursday	09:00:00	21:00:00	t	2025-07-18 02:49:44.546+00	2025-07-18 02:49:44.546+00	\N
+45	14	Friday	09:00:00	21:00:00	t	2025-07-18 02:49:44.546+00	2025-07-18 02:49:44.546+00	\N
+46	14	Saturday	09:00:00	21:00:00	t	2025-07-18 02:49:44.546+00	2025-07-18 02:49:44.546+00	\N
+47	14	Sunday	10:00:00	18:00:00	t	2025-07-18 02:49:44.546+00	2025-07-18 02:49:44.546+00	\N
+48	15	Tuesday	09:00:00	21:00:00	t	2025-07-18 02:49:44.546+00	2025-07-18 02:49:44.546+00	\N
+49	15	Wednesday	09:00:00	21:00:00	t	2025-07-18 02:49:44.546+00	2025-07-18 02:49:44.546+00	\N
+50	15	Thursday	09:00:00	21:00:00	t	2025-07-18 02:49:44.546+00	2025-07-18 02:49:44.546+00	\N
+51	15	Friday	09:00:00	21:00:00	t	2025-07-18 02:49:44.546+00	2025-07-18 02:49:44.546+00	\N
+52	15	Saturday	09:00:00	21:00:00	t	2025-07-18 02:49:44.546+00	2025-07-18 02:49:44.546+00	\N
+53	15	Sunday	10:00:00	18:00:00	t	2025-07-18 02:49:44.546+00	2025-07-18 02:49:44.546+00	\N
+54	16	Tuesday	09:00:00	21:00:00	t	2025-07-18 02:49:44.546+00	2025-07-18 02:49:44.546+00	\N
+55	16	Wednesday	09:00:00	21:00:00	t	2025-07-18 02:49:44.546+00	2025-07-18 02:49:44.546+00	\N
+56	16	Thursday	09:00:00	21:00:00	t	2025-07-18 02:49:44.546+00	2025-07-18 02:49:44.546+00	\N
+57	16	Friday	09:00:00	21:00:00	t	2025-07-18 02:49:44.546+00	2025-07-18 02:49:44.546+00	\N
+58	16	Saturday	09:00:00	21:00:00	t	2025-07-18 02:49:44.546+00	2025-07-18 02:49:44.546+00	\N
+59	16	Sunday	10:00:00	18:00:00	t	2025-07-18 02:49:44.546+00	2025-07-18 02:49:44.546+00	\N
+60	17	Tuesday	09:00:00	21:00:00	t	2025-07-18 02:49:44.546+00	2025-07-18 02:49:44.546+00	\N
+61	17	Wednesday	09:00:00	21:00:00	t	2025-07-18 02:49:44.546+00	2025-07-18 02:49:44.546+00	\N
+62	17	Thursday	09:00:00	21:00:00	t	2025-07-18 02:49:44.546+00	2025-07-18 02:49:44.546+00	\N
+63	17	Friday	09:00:00	21:00:00	t	2025-07-18 02:49:44.546+00	2025-07-18 02:49:44.546+00	\N
+64	17	Saturday	09:00:00	21:00:00	t	2025-07-18 02:49:44.546+00	2025-07-18 02:49:44.546+00	\N
+65	17	Sunday	10:00:00	18:00:00	t	2025-07-18 02:49:44.546+00	2025-07-18 02:49:44.546+00	\N
+66	43	Monday	08:00:00	19:00:00	t	2025-07-18 02:49:44.546+00	2025-07-18 02:49:44.546+00	\N
+67	43	Tuesday	08:00:00	19:00:00	t	2025-07-18 02:49:44.546+00	2025-07-18 02:49:44.546+00	\N
+68	43	Wednesday	08:00:00	19:00:00	t	2025-07-18 02:49:44.546+00	2025-07-18 02:49:44.546+00	\N
+69	43	Thursday	08:00:00	19:00:00	t	2025-07-18 02:49:44.546+00	2025-07-18 02:49:44.546+00	\N
+70	43	Friday	08:00:00	19:00:00	t	2025-07-18 02:49:44.546+00	2025-07-18 02:49:44.546+00	\N
+71	43	Saturday	09:00:00	17:00:00	t	2025-07-18 02:49:44.546+00	2025-07-18 02:49:44.546+00	\N
+72	43	Sunday	11:00:00	16:00:00	t	2025-07-18 02:49:44.546+00	2025-07-18 02:49:44.546+00	\N
+73	44	Monday	08:00:00	19:00:00	t	2025-07-18 02:49:44.546+00	2025-07-18 02:49:44.546+00	\N
+74	44	Tuesday	08:00:00	19:00:00	t	2025-07-18 02:49:44.546+00	2025-07-18 02:49:44.546+00	\N
+75	44	Wednesday	08:00:00	19:00:00	t	2025-07-18 02:49:44.546+00	2025-07-18 02:49:44.546+00	\N
+76	44	Thursday	08:00:00	19:00:00	t	2025-07-18 02:49:44.546+00	2025-07-18 02:49:44.546+00	\N
+77	44	Friday	08:00:00	19:00:00	t	2025-07-18 02:49:44.546+00	2025-07-18 02:49:44.546+00	\N
+78	44	Saturday	09:00:00	17:00:00	t	2025-07-18 02:49:44.546+00	2025-07-18 02:49:44.546+00	\N
+79	44	Sunday	11:00:00	16:00:00	t	2025-07-18 02:49:44.546+00	2025-07-18 02:49:44.546+00	\N
+80	45	Monday	08:00:00	19:00:00	t	2025-07-18 02:49:44.546+00	2025-07-18 02:49:44.546+00	\N
+81	45	Tuesday	08:00:00	19:00:00	t	2025-07-18 02:49:44.546+00	2025-07-18 02:49:44.546+00	\N
+82	45	Wednesday	08:00:00	19:00:00	t	2025-07-18 02:49:44.546+00	2025-07-18 02:49:44.546+00	\N
+83	45	Thursday	08:00:00	19:00:00	t	2025-07-18 02:49:44.546+00	2025-07-18 02:49:44.546+00	\N
+84	45	Friday	08:00:00	19:00:00	t	2025-07-18 02:49:44.546+00	2025-07-18 02:49:44.546+00	\N
+85	45	Saturday	09:00:00	17:00:00	t	2025-07-18 02:49:44.546+00	2025-07-18 02:49:44.546+00	\N
+86	45	Sunday	11:00:00	16:00:00	t	2025-07-18 02:49:44.546+00	2025-07-18 02:49:44.546+00	\N
+87	46	Monday	08:00:00	19:00:00	t	2025-07-18 02:49:44.546+00	2025-07-18 02:49:44.546+00	\N
+88	46	Tuesday	08:00:00	19:00:00	t	2025-07-18 02:49:44.546+00	2025-07-18 02:49:44.546+00	\N
+89	46	Wednesday	08:00:00	19:00:00	t	2025-07-18 02:49:44.546+00	2025-07-18 02:49:44.546+00	\N
+90	46	Thursday	08:00:00	19:00:00	t	2025-07-18 02:49:44.546+00	2025-07-18 02:49:44.546+00	\N
+91	46	Friday	08:00:00	19:00:00	t	2025-07-18 02:49:44.546+00	2025-07-18 02:49:44.546+00	\N
+92	46	Saturday	09:00:00	17:00:00	t	2025-07-18 02:49:44.546+00	2025-07-18 02:49:44.546+00	\N
+93	46	Sunday	11:00:00	16:00:00	t	2025-07-18 02:49:44.546+00	2025-07-18 02:49:44.546+00	\N
+94	47	Monday	08:00:00	19:00:00	t	2025-07-18 02:49:44.546+00	2025-07-18 02:49:44.546+00	\N
+95	47	Tuesday	08:00:00	19:00:00	t	2025-07-18 02:49:44.546+00	2025-07-18 02:49:44.546+00	\N
+96	47	Wednesday	08:00:00	19:00:00	t	2025-07-18 02:49:44.546+00	2025-07-18 02:49:44.546+00	\N
+97	47	Thursday	08:00:00	19:00:00	t	2025-07-18 02:49:44.546+00	2025-07-18 02:49:44.546+00	\N
+98	47	Friday	08:00:00	19:00:00	t	2025-07-18 02:49:44.546+00	2025-07-18 02:49:44.546+00	\N
+99	47	Saturday	09:00:00	17:00:00	t	2025-07-18 02:49:44.546+00	2025-07-18 02:49:44.546+00	\N
+100	47	Sunday	11:00:00	16:00:00	t	2025-07-18 02:49:44.546+00	2025-07-18 02:49:44.546+00	\N
+\.
+
+
+--
+-- TOC entry 3541 (class 0 OID 33202)
+-- Dependencies: 220
+-- Data for Name: seeders; Type: TABLE DATA; Schema: public; Owner: postgres
+--
+
+COPY public.seeders (id, seeder, batch, executed_at) FROM stdin;
+\.
+
+
+--
+-- TOC entry 3551 (class 0 OID 34452)
+-- Dependencies: 230
+-- Data for Name: user_devices; Type: TABLE DATA; Schema: public; Owner: postgres
+--
+
+COPY public.user_devices (id, user_id, udid, device_token, device_type, access_token, device_brand, device_os, app_version, created_at, updated_at, deleted_at) FROM stdin;
+2	63	123456789	test-token	ios	eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6NjMsImVtYWlsIjoibXVoYW1tYWRyYWhiYW40QGdtYWlsLmNvbSIsInVzZXJUeXBlIjoidXNlciIsInVzZXJSb2xlIjoidXNlciIsImlhdCI6MTc1MjgwODcyNX0.1VpkpALDIJyHF6BjVn_lZ6RpYoaHCmMwY2e4l5Jr-jY|1752808725453	linux	ios	1	2025-07-18 03:18:45.456487+00	2025-07-18 03:18:45.456487+00	2025-07-18 03:19:26.454+00
+\.
+
+
+--
+-- TOC entry 3549 (class 0 OID 34402)
+-- Dependencies: 228
+-- Data for Name: users; Type: TABLE DATA; Schema: public; Owner: postgres
+--
+
+COPY public.users (id, full_name, user_name, email, password, provider_id, provider, phone_number, whatsapp_number, website_url, gender, dob, bio, about, profile_image, background_image, category_id, referal_id, region_id, language_id, address, country, state, city, latitude, longitude, verification_token, invitation_code, balance, user_type, user_role, is_email_verified, is_phone_verified, is_active, is_notify, created_at, updated_at, deleted_at) FROM stdin;
+2	Super Administrator	superadmin	admin@xtrafind.com	$2b$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi	\N	local	+1234567890	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	0	admin	admin	t	t	t	t	2025-07-18 02:49:44.511+00	2025-07-18 02:49:44.511+00	\N
+3	Grand Hotel Manager	grandhotel	manager@grandhotel.com	$2b$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi	\N	local	+1234567891	+1234567891	https://grandhotel.com	\N	\N	Luxury hotel providing exceptional hospitality services	Premier destination for business and leisure travelers with world-class amenities	\N	\N	9	\N	\N	\N	123 Hotel Avenue, Downtown	USA	NY	New York	40.7589	-73.9851	\N	\N	0	vender	user	t	t	t	t	2025-07-18 02:49:44.511+00	2025-07-18 02:49:44.511+00	\N
+4	Royal Palace Hotel	royalpalace	booking@royalpalace.com	$2b$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi	\N	local	+1234567892	+1234567892	https://royalpalace.com	\N	\N	Experience royal treatment at our heritage hotel	Historic hotel with modern amenities, perfect for weddings and corporate events	\N	\N	9	\N	\N	\N	456 Royal Street	USA	CA	Los Angeles	34.0522	-118.2437	\N	\N	0	vender	user	t	t	t	t	2025-07-18 02:49:44.511+00	2025-07-18 02:49:44.511+00	\N
+5	Ocean View Resort	oceanview	reservations@oceanview.com	$2b$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi	\N	local	+1234567893	+1234567893	https://oceanview.com	\N	\N	Beachfront resort with stunning ocean views	Tropical paradise resort offering water sports, spa services, and fine dining	\N	\N	9	\N	\N	\N	789 Beach Road	USA	FL	Miami	25.7617	-80.1918	\N	\N	0	vender	user	t	t	t	t	2025-07-18 02:49:44.511+00	2025-07-18 02:49:44.511+00	\N
+6	Mountain Lodge	mountainlodge	stay@mountainlodge.com	$2b$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi	\N	local	+1234567894	+1234567894	https://mountainlodge.com	\N	\N	Cozy mountain retreat for nature lovers	Rustic lodge offering hiking trails, fireplace lounges, and mountain adventure packages	\N	\N	9	\N	\N	\N	321 Alpine Way	USA	CO	Denver	39.7392	-104.9903	\N	\N	0	vender	user	t	t	t	t	2025-07-18 02:49:44.511+00	2025-07-18 02:49:44.511+00	\N
+7	Business Central Hotel	businesscentral	corporate@businesscentral.com	$2b$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi	\N	local	+1234567895	+1234567895	https://businesscentral.com	\N	\N	Prime location for business travelers	Modern hotel with conference facilities, business center, and executive lounges	\N	\N	9	\N	\N	\N	654 Corporate Plaza	USA	IL	Chicago	41.8781	-87.6298	\N	\N	0	vender	user	t	t	t	t	2025-07-18 02:49:44.511+00	2025-07-18 02:49:44.511+00	\N
+8	Zen Spa Wellness	zenspa	info@zenspa.com	$2b$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi	\N	local	+1234567896	+1234567896	https://zenspa.com	\N	\N	Rejuvenating spa treatments for mind, body and soul	Professional spa services offering massage therapy, skincare treatments, and wellness programs	\N	\N	10	\N	\N	\N	456 Wellness Street	USA	CA	Los Angeles	34.0522	-118.2437	\N	\N	0	vender	user	t	t	t	t	2025-07-18 02:49:44.511+00	2025-07-18 02:49:44.511+00	\N
+9	Luxury Day Spa	luxurydayspa	appointments@luxurydayspa.com	$2b$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi	\N	local	+1234567897	+1234567897	https://luxurydayspa.com	\N	\N	Premium spa treatments in elegant surroundings	High-end spa featuring aromatherapy, hot stone massages, and anti-aging facials	\N	\N	10	\N	\N	\N	987 Luxury Lane	USA	CA	Beverly Hills	34.0736	-118.4004	\N	\N	0	vender	user	t	t	t	t	2025-07-18 02:49:44.511+00	2025-07-18 02:49:44.511+00	\N
+10	Healing Touch Spa	healingtouch	heal@healingtouch.com	$2b$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi	\N	local	+1234567898	+1234567898	https://healingtouch.com	\N	\N	Therapeutic massage and holistic wellness center	Specializing in deep tissue massage, reflexology, and energy healing therapies	\N	\N	10	\N	\N	\N	159 Therapy Avenue	USA	WA	Seattle	47.6062	-122.3321	\N	\N	0	vender	user	t	t	t	t	2025-07-18 02:49:44.511+00	2025-07-18 02:49:44.511+00	\N
+11	Tranquil Waters Spa	tranquilwaters	relax@tranquilwaters.com	$2b$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi	\N	local	+1234567899	+1234567899	https://tranquilwaters.com	\N	\N	Peaceful spa retreat with water therapy	Spa resort featuring mineral pools, hydrotherapy, and meditation gardens	\N	\N	10	\N	\N	\N	753 Serenity Circle	USA	AZ	Phoenix	33.4484	-112.074	\N	\N	0	vender	user	t	t	t	t	2025-07-18 02:49:44.511+00	2025-07-18 02:49:44.511+00	\N
+12	Urban Retreat Spa	urbanretreat	book@urbanretreat.com	$2b$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi	\N	local	+1234567900	+1234567900	https://urbanretreat.com	\N	\N	Modern spa in the heart of the city	Contemporary spa offering express treatments for busy professionals and weekend packages	\N	\N	10	\N	\N	\N	951 Downtown Street	USA	OR	Portland	45.5152	-122.6784	\N	\N	0	vender	user	t	t	t	t	2025-07-18 02:49:44.511+00	2025-07-18 02:49:44.511+00	\N
+13	Style Studio Salon	stylestudio	book@stylestudio.com	$2b$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi	\N	local	+1234567901	+1234567901	https://stylestudio.com	\N	\N	Trendy hair and beauty salon for all occasions	Full-service salon offering haircuts, coloring, styling, and makeup services	\N	\N	11	\N	\N	\N	147 Fashion Boulevard	USA	NY	New York	40.7589	-73.9851	\N	\N	0	vender	user	t	t	t	t	2025-07-18 02:49:44.511+00	2025-07-18 02:49:44.511+00	\N
+14	Glamour Hair Lounge	glamourhair	style@glamourhair.com	$2b$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi	\N	local	+1234567902	+1234567902	https://glamourhair.com	\N	\N	Luxury hair salon with celebrity stylists	Upscale salon featuring balayage, extensions, and red carpet styling	\N	\N	11	\N	\N	\N	258 Glamour Street	USA	CA	Hollywood	34.0928	-118.3287	\N	\N	0	vender	user	t	t	t	t	2025-07-18 02:49:44.511+00	2025-07-18 02:49:44.511+00	\N
+15	Cut & Color Co	cutcolor	appointments@cutcolor.com	$2b$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi	\N	local	+1234567903	+1234567903	https://cutcolor.com	\N	\N	Expert hair cutting and coloring specialists	Modern salon specializing in precision cuts, creative coloring, and hair treatments	\N	\N	11	\N	\N	\N	369 Salon Avenue	USA	TX	Austin	30.2672	-97.7431	\N	\N	0	vender	user	t	t	t	t	2025-07-18 02:49:44.511+00	2025-07-18 02:49:44.511+00	\N
+16	Beauty Bliss Salon	beautybliss	glow@beautybliss.com	$2b$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi	\N	local	+1234567904	+1234567904	https://beautybliss.com	\N	\N	Complete beauty services under one roof	Full-service salon offering hair, nails, facials, and bridal packages	\N	\N	11	\N	\N	\N	741 Beauty Lane	USA	TN	Nashville	36.1627	-86.7816	\N	\N	0	vender	user	t	t	t	t	2025-07-18 02:49:44.511+00	2025-07-18 02:49:44.511+00	\N
+17	Chic Hair Boutique	chichair	chic@chichair.com	$2b$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi	\N	local	+1234567905	+1234567905	https://chichair.com	\N	\N	Boutique salon with personalized service	Intimate salon focused on creating unique looks tailored to each client's lifestyle	\N	\N	11	\N	\N	\N	852 Chic Street	USA	MA	Boston	42.3601	-71.0589	\N	\N	0	vender	user	t	t	t	t	2025-07-18 02:49:44.511+00	2025-07-18 02:49:44.511+00	\N
+18	Tasty Bites Restaurant	tastybites	orders@tastybites.com	$2b$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi	\N	local	+1234567906	+1234567906	https://tastybites.com	\N	\N	Authentic cuisine with fresh ingredients and exceptional flavors	Family-owned restaurant serving traditional and modern dishes with a focus on quality and taste	\N	\N	12	\N	\N	\N	789 Food Court, Mall Plaza	USA	IL	Chicago	41.8781	-87.6298	\N	\N	0	vender	user	t	t	t	t	2025-07-18 02:49:44.511+00	2025-07-18 02:49:44.511+00	\N
+19	Pizza Palace	pizzapalace	delivery@pizzapalace.com	$2b$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi	\N	local	+1234567907	+1234567907	https://pizzapalace.com	\N	\N	Authentic wood-fired pizzas delivered hot and fresh	Artisan pizza restaurant using imported Italian ingredients and traditional cooking methods	\N	\N	12	\N	\N	\N	963 Pizza Street	USA	NY	Brooklyn	40.6782	-73.9442	\N	\N	0	vender	user	t	t	t	t	2025-07-18 02:49:44.511+00	2025-07-18 02:49:44.511+00	\N
+20	Asian Fusion Kitchen	asianfusion	order@asianfusion.com	$2b$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi	\N	local	+1234567908	+1234567908	https://asianfusion.com	\N	\N	Modern Asian cuisine with creative fusion dishes	Contemporary restaurant blending traditional Asian flavors with modern culinary techniques	\N	\N	12	\N	\N	\N	174 Asia Avenue	USA	CA	San Francisco	37.7749	-122.4194	\N	\N	0	vender	user	t	t	t	t	2025-07-18 02:49:44.511+00	2025-07-18 02:49:44.511+00	\N
+21	Burger Barn	burgerbarn	eat@burgerbarn.com	$2b$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi	\N	local	+1234567909	+1234567909	https://burgerbarn.com	\N	\N	Gourmet burgers and craft shakes	Classic American diner serving handcrafted burgers, fries, and milkshakes	\N	\N	12	\N	\N	\N	285 Burger Boulevard	USA	TX	Dallas	32.7767	-96.797	\N	\N	0	vender	user	t	t	t	t	2025-07-18 02:49:44.511+00	2025-07-18 02:49:44.511+00	\N
+22	Healthy Bowls Co	healthybowls	fresh@healthybowls.com	$2b$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi	\N	local	+1234567910	+1234567910	https://healthybowls.com	\N	\N	Nutritious and delicious healthy meal bowls	Health-focused restaurant offering customizable grain bowls, smoothies, and fresh salads	\N	\N	12	\N	\N	\N	396 Health Street	USA	OR	Portland	45.5152	-122.6784	\N	\N	0	vender	user	t	t	t	t	2025-07-18 02:49:44.511+00	2025-07-18 02:49:44.511+00	\N
+23	Fine Dining Elegance	finedining	reservations@finedining.com	$2b$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi	\N	local	+1234567911	+1234567911	https://finedining.com	\N	\N	Michelin-starred fine dining experience	Award-winning restaurant offering exquisite cuisine and exceptional wine pairings	\N	\N	13	\N	\N	\N	507 Gourmet Lane	USA	CA	Napa Valley	38.2975	-122.2869	\N	\N	0	vender	user	t	t	t	t	2025-07-18 02:49:44.511+00	2025-07-18 02:49:44.511+00	\N
+24	Coastal Seafood House	coastalseafood	tables@coastalseafood.com	$2b$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi	\N	local	+1234567912	+1234567912	https://coastalseafood.com	\N	\N	Fresh seafood with oceanfront dining	Waterfront restaurant specializing in locally caught seafood and coastal cuisine	\N	\N	13	\N	\N	\N	618 Harbor View	USA	CA	Santa Monica	34.0195	-118.4912	\N	\N	0	vender	user	t	t	t	t	2025-07-18 02:49:44.511+00	2025-07-18 02:49:44.511+00	\N
+25	Rooftop Garden Bistro	rooftopgarden	book@rooftopgarden.com	$2b$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi	\N	local	+1234567913	+1234567913	https://rooftopgarden.com	\N	\N	Urban rooftop dining with garden-to-table cuisine	Rooftop restaurant featuring organic ingredients from our own garden and city skyline views	\N	\N	13	\N	\N	\N	729 Sky High Avenue	USA	NY	Manhattan	40.7831	-73.9712	\N	\N	0	vender	user	t	t	t	t	2025-07-18 02:49:44.511+00	2025-07-18 02:49:44.511+00	\N
+26	Steakhouse Prime	steakprime	reserve@steakprime.com	$2b$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi	\N	local	+1234567914	+1234567914	https://steakprime.com	\N	\N	Premium steakhouse with dry-aged beef	Classic steakhouse serving USDA Prime cuts, aged in-house, with extensive wine cellar	\N	\N	13	\N	\N	\N	840 Beef Boulevard	USA	MO	Kansas City	39.0997	-94.5786	\N	\N	0	vender	user	t	t	t	t	2025-07-18 02:49:44.511+00	2025-07-18 02:49:44.511+00	\N
+27	Mediterranean Terrace	medterrace	dining@medterrace.com	$2b$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi	\N	local	+1234567915	+1234567915	https://medterrace.com	\N	\N	Authentic Mediterranean cuisine in elegant setting	Mediterranean restaurant featuring traditional recipes, olive oil tastings, and live music	\N	\N	13	\N	\N	\N	951 Olive Grove Way	USA	FL	Sarasota	27.3364	-82.5307	\N	\N	0	vender	user	t	t	t	t	2025-07-18 02:49:44.511+00	2025-07-18 02:49:44.511+00	\N
+28	Fresh Market Groceries	freshmarket	sales@freshmarket.com	$2b$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi	\N	local	+1234567916	+1234567916	https://freshmarket.com	\N	\N	Fresh groceries and daily essentials delivered to your doorstep	Local grocery store providing fresh produce, dairy, meat, and household items with home delivery service	\N	\N	3	\N	\N	\N	321 Market Street	USA	FL	Miami	25.7617	-80.1918	\N	\N	0	vender	user	t	t	t	t	2025-07-18 02:49:44.511+00	2025-07-18 02:49:44.511+00	\N
+29	Organic Harvest Store	organicharvest	organic@organicharvest.com	$2b$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi	\N	local	+1234567917	+1234567917	https://organicharvest.com	\N	\N	Certified organic produce and natural products	Specialty grocery store featuring organic fruits, vegetables, and eco-friendly household products	\N	\N	3	\N	\N	\N	1062 Green Valley Road	USA	CO	Boulder	40.015	-105.2705	\N	\N	0	vender	user	t	t	t	t	2025-07-18 02:49:44.511+00	2025-07-18 02:49:44.511+00	\N
+30	Corner Convenience Plus	cornerconvenience	shop@cornerconvenience.com	$2b$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi	\N	local	+1234567918	+1234567918	https://cornerconvenience.com	\N	\N	24/7 convenience store with quick essentials	Neighborhood convenience store open round the clock with snacks, beverages, and daily necessities	\N	\N	3	\N	\N	\N	173 Corner Street	USA	NV	Las Vegas	36.1699	-115.1398	\N	\N	0	vender	user	t	t	t	t	2025-07-18 02:49:44.511+00	2025-07-18 02:49:44.511+00	\N
+31	International Foods Market	internationalfoods	global@internationalfoods.com	$2b$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi	\N	local	+1234567919	+1234567919	https://internationalfoods.com	\N	\N	Authentic international ingredients and specialty foods	Diverse grocery store offering ingredients from around the world, spices, and ethnic specialty items	\N	\N	3	\N	\N	\N	284 World Bazaar	USA	NY	Queens	40.7282	-73.7949	\N	\N	0	vender	user	t	t	t	t	2025-07-18 02:49:44.511+00	2025-07-18 02:49:44.511+00	\N
+32	Farm Fresh Direct	farmfresh	farm@farmfresh.com	$2b$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi	\N	local	+1234567920	+1234567920	https://farmfresh.com	\N	\N	Farm-to-table groceries with local partnerships	Grocery delivery service partnering with local farms to provide the freshest seasonal produce	\N	\N	3	\N	\N	\N	395 Farm Road	USA	CA	Sacramento	38.5816	-121.4944	\N	\N	0	vender	user	t	t	t	t	2025-07-18 02:49:44.511+00	2025-07-18 02:49:44.511+00	\N
+33	Fashion Forward Boutique	fashionforward	style@fashionforward.com	$2b$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi	\N	local	+1234567921	+1234567921	https://fashionforward.com	\N	\N	Trendy clothing and accessories for the modern lifestyle	Boutique clothing store featuring the latest fashion trends for men, women, and children	\N	\N	4	\N	\N	\N	654 Fashion Avenue	USA	CA	San Francisco	37.7749	-122.4194	\N	\N	0	vender	user	t	t	t	t	2025-07-18 02:49:44.511+00	2025-07-18 02:49:44.511+00	\N
+34	Urban Street Wear	urbanstreet	shop@urbanstreet.com	$2b$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi	\N	local	+1234567922	+1234567922	https://urbanstreet.com	\N	\N	Edgy streetwear and urban fashion essentials	Street fashion retailer specializing in sneakers, hoodies, and contemporary urban clothing	\N	\N	4	\N	\N	\N	412 Street Style Lane	USA	GA	Atlanta	33.749	-84.388	\N	\N	0	vender	user	t	t	t	t	2025-07-18 02:49:44.511+00	2025-07-18 02:49:44.511+00	\N
+35	Classic Formal Attire	classicformal	formal@classicformal.com	$2b$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi	\N	local	+1234567923	+1234567923	https://classicformal.com	\N	\N	Professional business attire and formal wear	Specializing in suits, dress shirts, ties, and professional clothing for business and formal events	\N	\N	4	\N	\N	\N	523 Business District	USA	DC	Washington	38.9072	-77.0369	\N	\N	0	vender	user	t	t	t	t	2025-07-18 02:49:44.511+00	2025-07-18 02:49:44.511+00	\N
+36	Bohemian Style Co	bohemianstyle	boho@bohemianstyle.com	$2b$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi	\N	local	+1234567924	+1234567924	https://bohemianstyle.com	\N	\N	Free-spirited bohemian and vintage clothing	Eclectic collection of boho dresses, vintage accessories, and artisan-made jewelry	\N	\N	4	\N	\N	\N	634 Artistic Quarter	USA	NM	Santa Fe	35.687	-105.9378	\N	\N	0	vender	user	t	t	t	t	2025-07-18 02:49:44.511+00	2025-07-18 02:49:44.511+00	\N
+37	Athletic Performance Gear	athleticgear	performance@athleticgear.com	$2b$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi	\N	local	+1234567925	+1234567925	https://athleticgear.com	\N	\N	High-performance athletic wear and fitness apparel	Sports clothing store featuring moisture-wicking fabrics, running shoes, and workout accessories	\N	\N	4	\N	\N	\N	745 Sports Complex	USA	AZ	Phoenix	33.4484	-112.074	\N	\N	0	vender	user	t	t	t	t	2025-07-18 02:49:44.511+00	2025-07-18 02:49:44.511+00	\N
+38	Wellness Health Center	wellnesshealth	care@wellnesshealth.com	$2b$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi	\N	local	+1234567926	+1234567926	https://wellnesshealth.com	\N	\N	Comprehensive healthcare services and wellness programs	Medical center providing preventive care, health screenings, and wellness consultations	\N	\N	5	\N	\N	\N	147 Health Drive	USA	CO	Denver	39.7392	-104.9903	\N	\N	0	vender	user	t	t	t	t	2025-07-18 02:49:44.511+00	2025-07-18 02:49:44.511+00	\N
+39	Family Medical Practice	familymedical	appointments@familymedical.com	$2b$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi	\N	local	+1234567927	+1234567927	https://familymedical.com	\N	\N	Primary care for the whole family	Family practice clinic offering routine checkups, vaccinations, and chronic disease management	\N	\N	5	\N	\N	\N	856 Family Way	USA	MN	Minneapolis	44.9778	-93.265	\N	\N	0	vender	user	t	t	t	t	2025-07-18 02:49:44.511+00	2025-07-18 02:49:44.511+00	\N
+40	Natural Health Pharmacy	naturalhealth	natural@naturalhealth.com	$2b$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi	\N	local	+1234567928	+1234567928	https://naturalhealth.com	\N	\N	Natural remedies and holistic health solutions	Pharmacy specializing in herbal supplements, vitamins, and alternative health products	\N	\N	5	\N	\N	\N	967 Herbal Street	USA	OR	Eugene	44.0521	-123.0868	\N	\N	0	vender	user	t	t	t	t	2025-07-18 02:49:44.511+00	2025-07-18 02:49:44.511+00	\N
+41	Fitness & Nutrition Hub	fitnessnutrition	fit@fitnessnutrition.com	$2b$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi	\N	local	+1234567929	+1234567929	https://fitnessnutrition.com	\N	\N	Personal training and nutritional counseling services	Fitness center offering personal training, group classes, and certified nutrition consultations	\N	\N	5	\N	\N	\N	178 Fitness Boulevard	USA	CA	San Diego	32.7157	-117.1611	\N	\N	0	vender	user	t	t	t	t	2025-07-18 02:49:44.511+00	2025-07-18 02:49:44.511+00	\N
+42	Mental Health & Counseling	mentalhealth	therapy@mentalhealth.com	$2b$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi	\N	local	+1234567930	+1234567930	https://mentalhealth.com	\N	\N	Professional mental health counseling and therapy services	Licensed therapists providing individual, family, and group counseling sessions	\N	\N	5	\N	\N	\N	289 Therapy Lane	USA	WI	Madison	43.0731	-89.4012	\N	\N	0	vender	user	t	t	t	t	2025-07-18 02:49:44.511+00	2025-07-18 02:49:44.511+00	\N
+43	Prime Properties Real Estate	primeproperties	sales@primeproperties.com	$2b$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi	\N	local	+1234567931	+1234567931	https://primeproperties.com	\N	\N	Luxury residential and commercial property sales	Real estate agency specializing in high-end properties, investment opportunities, and market analysis	\N	\N	6	\N	\N	\N	390 Real Estate Plaza	USA	CA	Beverly Hills	34.0696	-118.4053	\N	\N	0	vender	user	t	t	t	t	2025-07-18 02:49:44.511+00	2025-07-18 02:49:44.511+00	\N
+44	Urban Apartment Rentals	urbanapartments	rent@urbanapartments.com	$2b$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi	\N	local	+1234567932	+1234567932	https://urbanapartments.com	\N	\N	Modern apartment rentals in prime city locations	Property management company offering furnished and unfurnished apartments in downtown areas	\N	\N	6	\N	\N	\N	501 Downtown Circle	USA	WA	Seattle	47.6062	-122.3321	\N	\N	0	vender	user	t	t	t	t	2025-07-18 02:49:44.511+00	2025-07-18 02:49:44.511+00	\N
+45	Suburban Family Homes	suburbanfamily	homes@suburbanfamily.com	$2b$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi	\N	local	+1234567933	+1234567933	https://suburbanfamily.com	\N	\N	Family-friendly homes in safe suburban neighborhoods	Real estate specialist in single-family homes, townhouses, and family-oriented communities	\N	\N	6	\N	\N	\N	612 Suburban Lane	USA	TX	Plano	33.0198	-96.6989	\N	\N	0	vender	user	t	t	t	t	2025-07-18 02:49:44.511+00	2025-07-18 02:49:44.511+00	\N
+46	Commercial Property Group	commercialproperty	commercial@commercialproperty.com	$2b$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi	\N	local	+1234567934	+1234567934	https://commercialproperty.com	\N	\N	Office spaces and commercial real estate solutions	Commercial real estate firm specializing in office buildings, retail spaces, and industrial properties	\N	\N	6	\N	\N	\N	723 Business District	USA	NC	Charlotte	35.2271	-80.8431	\N	\N	0	vender	user	t	t	t	t	2025-07-18 02:49:44.511+00	2025-07-18 02:49:44.511+00	\N
+47	Vacation Rental Properties	vacationrentals	vacation@vacationrentals.com	$2b$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi	\N	local	+1234567935	+1234567935	https://vacationrentals.com	\N	\N	Short-term vacation rentals and holiday properties	Vacation rental management company offering beachfront, mountain, and city vacation properties	\N	\N	6	\N	\N	\N	834 Resort Avenue	USA	FL	Key West	24.5551	-81.7823	\N	\N	0	vender	user	t	t	t	t	2025-07-18 02:49:44.511+00	2025-07-18 02:49:44.511+00	\N
+48	Elite Event Planning	eliteevents	plan@eliteevents.com	$2b$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi	\N	local	+1234567936	+1234567936	https://eliteevents.com	\N	\N	Luxury event planning and coordination services	Full-service event planning company specializing in weddings, corporate events, and special celebrations	\N	\N	7	\N	\N	\N	945 Event Plaza	USA	NV	Las Vegas	36.1699	-115.1398	\N	\N	0	vender	user	t	t	t	t	2025-07-18 02:49:44.511+00	2025-07-18 02:49:44.511+00	\N
+49	Wedding Dreams Coordinator	weddingdreams	weddings@weddingdreams.com	$2b$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi	\N	local	+1234567937	+1234567937	https://weddingdreams.com	\N	\N	Creating magical wedding experiences	Wedding planning service offering venue selection, decoration, catering coordination, and photography	\N	\N	7	\N	\N	\N	156 Romance Road	USA	GA	Savannah	32.0835	-81.0998	\N	\N	0	vender	user	t	t	t	t	2025-07-18 02:49:44.511+00	2025-07-18 02:49:44.511+00	\N
+50	Corporate Conference Solutions	corporateconference	corporate@corporateconference.com	$2b$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi	\N	local	+1234567938	+1234567938	https://corporateconference.com	\N	\N	Professional business event management	Corporate event specialists organizing conferences, trade shows, team building events, and business meetings	\N	\N	7	\N	\N	\N	267 Conference Center	USA	FL	Orlando	28.5383	-81.3792	\N	\N	0	vender	user	t	t	t	t	2025-07-18 02:49:44.511+00	2025-07-18 02:49:44.511+00	\N
+51	Party Time Entertainment	partytime	party@partytime.com	$2b$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi	\N	local	+1234567939	+1234567939	https://partytime.com	\N	\N	Fun celebrations and party entertainment services	Party planning service offering DJs, entertainment, decorations, and catering for birthdays and celebrations	\N	\N	7	\N	\N	\N	378 Party Street	USA	LA	New Orleans	29.9511	-90.0715	\N	\N	0	vender	user	t	t	t	t	2025-07-18 02:49:44.511+00	2025-07-18 02:49:44.511+00	\N
+52	Music Festival Organizers	musicfestival	music@musicfestival.com	$2b$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi	\N	local	+1234567940	+1234567940	https://musicfestival.com	\N	\N	Large-scale music events and festival production	Event production company specializing in concerts, music festivals, and live entertainment venues	\N	\N	7	\N	\N	\N	489 Music Avenue	USA	TN	Nashville	36.1627	-86.7816	\N	\N	0	vender	user	t	t	t	t	2025-07-18 02:49:44.511+00	2025-07-18 02:49:44.511+00	\N
+53	TechWorld Electronics	techworld	support@techworld.com	$2b$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi	\N	local	+1234567941	+1234567941	https://techworld.com	\N	\N	Latest electronics and gadgets for tech enthusiasts	Electronics retailer specializing in smartphones, laptops, gaming equipment, and smart home devices	\N	\N	14	\N	\N	\N	987 Tech Plaza	USA	TX	Austin	30.2672	-97.7431	\N	\N	0	vender	user	t	t	t	t	2025-07-18 02:49:44.511+00	2025-07-18 02:49:44.511+00	\N
+54	Gaming Paradise Store	gamingparadise	games@gamingparadise.com	$2b$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi	\N	local	+1234567942	+1234567942	https://gamingparadise.com	\N	\N	Ultimate destination for gaming hardware and accessories	Gaming specialist offering consoles, PC components, VR headsets, and gaming peripherals	\N	\N	14	\N	\N	\N	590 Gamer Street	USA	CA	San Jose	37.3382	-121.8863	\N	\N	0	vender	user	t	t	t	t	2025-07-18 02:49:44.511+00	2025-07-18 02:49:44.511+00	\N
+55	Smart Home Solutions	smarthome	smart@smarthome.com	$2b$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi	\N	local	+1234567943	+1234567943	https://smarthome.com	\N	\N	Intelligent home automation and IoT devices	Smart home technology provider offering security systems, lighting control, and voice assistants	\N	\N	14	\N	\N	\N	701 Innovation Drive	USA	NC	Raleigh	35.7796	-78.6382	\N	\N	0	vender	user	t	t	t	t	2025-07-18 02:49:44.511+00	2025-07-18 02:49:44.511+00	\N
+56	Audio Visual Pro	audiovisual	av@audiovisual.com	$2b$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi	\N	local	+1234567944	+1234567944	https://audiovisual.com	\N	\N	Professional audio and video equipment specialists	AV equipment store offering home theater systems, professional microphones, and recording equipment	\N	\N	14	\N	\N	\N	812 Sound Boulevard	USA	CA	Los Angeles	34.0522	-118.2437	\N	\N	0	vender	user	t	t	t	t	2025-07-18 02:49:44.511+00	2025-07-18 02:49:44.511+00	\N
+57	Mobile Device Hub	mobiledevice	mobile@mobiledevice.com	$2b$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi	\N	local	+1234567945	+1234567945	https://mobiledevice.com	\N	\N	Smartphones, tablets, and mobile accessories	Mobile technology retailer offering the latest smartphones, tablets, cases, and charging accessories	\N	\N	14	\N	\N	\N	923 Mobile Street	USA	GA	Atlanta	33.749	-84.388	\N	\N	0	vender	user	t	t	t	t	2025-07-18 02:49:44.511+00	2025-07-18 02:49:44.511+00	\N
+58	Modern Interior Designs	moderninterior	design@moderninterior.com	$2b$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi	\N	local	+1234567946	+1234567946	https://moderninterior.com	\N	\N	Contemporary interior design and home decor solutions	Interior design studio specializing in modern furniture, space planning, and home decoration services	\N	\N	15	\N	\N	\N	134 Design Avenue	USA	CA	San Francisco	37.7749	-122.4194	\N	\N	0	vender	user	t	t	t	t	2025-07-18 02:49:44.511+00	2025-07-18 02:49:44.511+00	\N
+59	Rustic Home Decor	rustichome	rustic@rustichome.com	$2b$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi	\N	local	+1234567947	+1234567947	https://rustichome.com	\N	\N	Farmhouse and rustic interior design elements	Home decor store featuring reclaimed wood furniture, vintage accessories, and country-style decorations	\N	\N	15	\N	\N	\N	245 Country Lane	USA	TN	Nashville	36.1627	-86.7816	\N	\N	0	vender	user	t	t	t	t	2025-07-18 02:49:44.511+00	2025-07-18 02:49:44.511+00	\N
+60	Luxury Living Spaces	luxuryliving	luxury@luxuryliving.com	$2b$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi	\N	local	+1234567948	+1234567948	https://luxuryliving.com	\N	\N	High-end furniture and luxury home accessories	Luxury interior design boutique offering designer furniture, custom upholstery, and exclusive home accessories	\N	\N	15	\N	\N	\N	356 Luxury Row	USA	CA	Beverly Hills	34.0736	-118.4004	\N	\N	0	vender	user	t	t	t	t	2025-07-18 02:49:44.511+00	2025-07-18 02:49:44.511+00	\N
+61	Minimalist Space Design	minimalistspace	minimal@minimalistspace.com	$2b$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi	\N	local	+1234567949	+1234567949	https://minimalistspace.com	\N	\N	Clean, simple, and functional interior design	Minimalist design consultant focusing on clean lines, functional furniture, and clutter-free living spaces	\N	\N	15	\N	\N	\N	467 Zen Street	USA	OR	Portland	45.5152	-122.6784	\N	\N	0	vender	user	t	t	t	t	2025-07-18 02:49:44.511+00	2025-07-18 02:49:44.511+00	\N
+62	Artistic Home Gallery	artistichome	art@artistichome.com	$2b$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi	\N	local	+1234567950	+1234567950	https://artistichome.com	\N	\N	Unique artistic pieces and creative home decorations	Art gallery and home decor store featuring original artwork, sculptures, and handcrafted decorative items	\N	\N	15	\N	\N	\N	578 Art District	USA	NM	Santa Fe	35.687	-105.9378	\N	\N	0	vender	user	t	t	t	t	2025-07-18 02:49:44.511+00	2025-07-18 02:49:44.511+00	\N
+63	muhammad Rahban	deleted_1752808766448_rahban	deleted_1752808766448_muhammadrahban4@gmail.com	b2972c2422a14ef493f1a2492c0104efa3c92765fb9a6362e05d060fa7bb4d6f861975006df1172fdf97c923222b55d00dcac261d3ed4380f8b1c49341e213dc	\N	local	\N	\N	\N	male	1999-06-01	\N	\N	\N	\N	\N	\N	1	1	\N	\N	\N	\N	\N	\N	\N	\N	0	user	user	f	f	f	t	2025-07-18 03:18:45.449444+00	2025-07-18 03:19:26.45274+00	\N
+\.
+
+
+--
+-- TOC entry 3581 (class 0 OID 0)
+-- Dependencies: 225
+-- Name: categories_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
+--
+
+SELECT pg_catalog.setval('public.categories_id_seq', 15, true);
+
+
+--
+-- TOC entry 3582 (class 0 OID 0)
+-- Dependencies: 235
+-- Name: contact_us_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
+--
+
+SELECT pg_catalog.setval('public.contact_us_id_seq', 1, false);
+
+
+--
+-- TOC entry 3583 (class 0 OID 0)
+-- Dependencies: 233
+-- Name: contents_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
+--
+
+SELECT pg_catalog.setval('public.contents_id_seq', 3, true);
+
+
+--
+-- TOC entry 3584 (class 0 OID 0)
+-- Dependencies: 239
+-- Name: galleries_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
+--
+
+SELECT pg_catalog.setval('public.galleries_id_seq', 1, false);
+
+
+--
+-- TOC entry 3585 (class 0 OID 0)
+-- Dependencies: 223
+-- Name: languages_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
+--
+
+SELECT pg_catalog.setval('public.languages_id_seq', 1, true);
+
+
+--
+-- TOC entry 3586 (class 0 OID 0)
+-- Dependencies: 217
+-- Name: migrations_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
+--
+
+SELECT pg_catalog.setval('public.migrations_id_seq', 109, true);
+
+
+--
+-- TOC entry 3587 (class 0 OID 0)
+-- Dependencies: 231
+-- Name: notifications_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
+--
+
+SELECT pg_catalog.setval('public.notifications_id_seq', 1, false);
+
+
+--
+-- TOC entry 3588 (class 0 OID 0)
+-- Dependencies: 221
+-- Name: regions_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
+--
+
+SELECT pg_catalog.setval('public.regions_id_seq', 2, true);
+
+
+--
+-- TOC entry 3589 (class 0 OID 0)
+-- Dependencies: 237
+-- Name: schedules_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
+--
+
+SELECT pg_catalog.setval('public.schedules_id_seq', 100, true);
+
+
+--
+-- TOC entry 3590 (class 0 OID 0)
+-- Dependencies: 219
+-- Name: seeders_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
+--
+
+SELECT pg_catalog.setval('public.seeders_id_seq', 1, false);
+
+
+--
+-- TOC entry 3591 (class 0 OID 0)
+-- Dependencies: 229
+-- Name: user_devices_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
+--
+
+SELECT pg_catalog.setval('public.user_devices_id_seq', 2, true);
+
+
+--
+-- TOC entry 3592 (class 0 OID 0)
+-- Dependencies: 227
+-- Name: users_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
+--
+
+SELECT pg_catalog.setval('public.users_id_seq', 63, true);
+
+
+--
+-- TOC entry 3354 (class 2606 OID 34372)
+-- Name: categories categories_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.categories
+    ADD CONSTRAINT categories_pkey PRIMARY KEY (id);
+
+
+--
+-- TOC entry 3377 (class 2606 OID 34513)
+-- Name: contact_us contact_us_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.contact_us
+    ADD CONSTRAINT contact_us_pkey PRIMARY KEY (id);
+
+
+--
+-- TOC entry 3373 (class 2606 OID 34499)
+-- Name: contents contents_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.contents
+    ADD CONSTRAINT contents_pkey PRIMARY KEY (id);
+
+
+--
+-- TOC entry 3375 (class 2606 OID 34501)
+-- Name: contents contents_slug_key; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.contents
+    ADD CONSTRAINT contents_slug_key UNIQUE (slug);
+
+
+--
+-- TOC entry 3381 (class 2606 OID 34544)
+-- Name: galleries galleries_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.galleries
+    ADD CONSTRAINT galleries_pkey PRIMARY KEY (id);
+
+
+--
+-- TOC entry 3350 (class 2606 OID 34360)
+-- Name: languages languages_code_key; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.languages
+    ADD CONSTRAINT languages_code_key UNIQUE (code);
+
+
+--
+-- TOC entry 3352 (class 2606 OID 34358)
+-- Name: languages languages_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.languages
+    ADD CONSTRAINT languages_pkey PRIMARY KEY (id);
+
+
+--
+-- TOC entry 3338 (class 2606 OID 16575)
+-- Name: migrations migrations_migration_key; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.migrations
+    ADD CONSTRAINT migrations_migration_key UNIQUE (migration);
+
+
+--
+-- TOC entry 3340 (class 2606 OID 16573)
+-- Name: migrations migrations_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.migrations
+    ADD CONSTRAINT migrations_pkey PRIMARY KEY (id);
+
+
+--
+-- TOC entry 3371 (class 2606 OID 34478)
+-- Name: notifications notifications_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.notifications
+    ADD CONSTRAINT notifications_pkey PRIMARY KEY (id);
+
+
+--
+-- TOC entry 3346 (class 2606 OID 34348)
+-- Name: regions regions_code_key; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.regions
+    ADD CONSTRAINT regions_code_key UNIQUE (code);
+
+
+--
+-- TOC entry 3348 (class 2606 OID 34346)
+-- Name: regions regions_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.regions
+    ADD CONSTRAINT regions_pkey PRIMARY KEY (id);
+
+
+--
+-- TOC entry 3379 (class 2606 OID 34528)
+-- Name: schedules schedules_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.schedules
+    ADD CONSTRAINT schedules_pkey PRIMARY KEY (id);
+
+
+--
+-- TOC entry 3342 (class 2606 OID 33208)
+-- Name: seeders seeders_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.seeders
+    ADD CONSTRAINT seeders_pkey PRIMARY KEY (id);
+
+
+--
+-- TOC entry 3344 (class 2606 OID 33210)
+-- Name: seeders seeders_seeder_key; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.seeders
+    ADD CONSTRAINT seeders_seeder_key UNIQUE (seeder);
+
+
+--
+-- TOC entry 3369 (class 2606 OID 34461)
+-- Name: user_devices user_devices_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.user_devices
+    ADD CONSTRAINT user_devices_pkey PRIMARY KEY (id);
+
+
+--
+-- TOC entry 3357 (class 2606 OID 34423)
+-- Name: users users_email_key; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.users
+    ADD CONSTRAINT users_email_key UNIQUE (email);
+
+
+--
+-- TOC entry 3360 (class 2606 OID 34419)
+-- Name: users users_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.users
+    ADD CONSTRAINT users_pkey PRIMARY KEY (id);
+
+
+--
+-- TOC entry 3365 (class 2606 OID 34421)
+-- Name: users users_user_name_key; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.users
+    ADD CONSTRAINT users_user_name_key UNIQUE (user_name);
+
+
+--
+-- TOC entry 3355 (class 1259 OID 34444)
+-- Name: users_email; Type: INDEX; Schema: public; Owner: postgres
+--
+
+CREATE INDEX users_email ON public.users USING btree (email);
+
+
+--
+-- TOC entry 3358 (class 1259 OID 34449)
+-- Name: users_language_id; Type: INDEX; Schema: public; Owner: postgres
+--
+
+CREATE INDEX users_language_id ON public.users USING btree (language_id);
+
+
+--
+-- TOC entry 3361 (class 1259 OID 34450)
+-- Name: users_referal_id; Type: INDEX; Schema: public; Owner: postgres
+--
+
+CREATE INDEX users_referal_id ON public.users USING btree (referal_id);
+
+
+--
+-- TOC entry 3362 (class 1259 OID 34448)
+-- Name: users_region_id; Type: INDEX; Schema: public; Owner: postgres
+--
+
+CREATE INDEX users_region_id ON public.users USING btree (region_id);
+
+
+--
+-- TOC entry 3363 (class 1259 OID 34445)
+-- Name: users_user_name; Type: INDEX; Schema: public; Owner: postgres
+--
+
+CREATE INDEX users_user_name ON public.users USING btree (user_name);
+
+
+--
+-- TOC entry 3366 (class 1259 OID 34447)
+-- Name: users_user_role; Type: INDEX; Schema: public; Owner: postgres
+--
+
+CREATE INDEX users_user_role ON public.users USING btree (user_role);
+
+
+--
+-- TOC entry 3367 (class 1259 OID 34446)
+-- Name: users_user_type; Type: INDEX; Schema: public; Owner: postgres
+--
+
+CREATE INDEX users_user_type ON public.users USING btree (user_type);
+
+
+--
+-- TOC entry 3382 (class 2606 OID 34373)
+-- Name: categories categories_category_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.categories
+    ADD CONSTRAINT categories_category_id_fkey FOREIGN KEY (category_id) REFERENCES public.categories(id) ON UPDATE CASCADE ON DELETE SET NULL;
+
+
+--
+-- TOC entry 3390 (class 2606 OID 34514)
+-- Name: contact_us contact_us_user_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.contact_us
+    ADD CONSTRAINT contact_us_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.users(id) ON UPDATE CASCADE ON DELETE SET NULL;
+
+
+--
+-- TOC entry 3392 (class 2606 OID 34545)
+-- Name: galleries galleries_user_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.galleries
+    ADD CONSTRAINT galleries_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.users(id) ON UPDATE CASCADE ON DELETE CASCADE;
+
+
+--
+-- TOC entry 3388 (class 2606 OID 34484)
+-- Name: notifications notifications_actor_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.notifications
+    ADD CONSTRAINT notifications_actor_id_fkey FOREIGN KEY (actor_id) REFERENCES public.users(id);
+
+
+--
+-- TOC entry 3389 (class 2606 OID 34479)
+-- Name: notifications notifications_user_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.notifications
+    ADD CONSTRAINT notifications_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.users(id);
+
+
+--
+-- TOC entry 3391 (class 2606 OID 34529)
+-- Name: schedules schedules_user_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.schedules
+    ADD CONSTRAINT schedules_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.users(id) ON UPDATE CASCADE ON DELETE CASCADE;
+
+
+--
+-- TOC entry 3387 (class 2606 OID 34462)
+-- Name: user_devices user_devices_user_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.user_devices
+    ADD CONSTRAINT user_devices_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.users(id);
+
+
+--
+-- TOC entry 3383 (class 2606 OID 34424)
+-- Name: users users_category_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.users
+    ADD CONSTRAINT users_category_id_fkey FOREIGN KEY (category_id) REFERENCES public.categories(id) ON UPDATE CASCADE ON DELETE SET NULL;
+
+
+--
+-- TOC entry 3384 (class 2606 OID 34439)
+-- Name: users users_language_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.users
+    ADD CONSTRAINT users_language_id_fkey FOREIGN KEY (language_id) REFERENCES public.languages(id);
+
+
+--
+-- TOC entry 3385 (class 2606 OID 34429)
+-- Name: users users_referal_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.users
+    ADD CONSTRAINT users_referal_id_fkey FOREIGN KEY (referal_id) REFERENCES public.users(id);
+
+
+--
+-- TOC entry 3386 (class 2606 OID 34434)
+-- Name: users users_region_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.users
+    ADD CONSTRAINT users_region_id_fkey FOREIGN KEY (region_id) REFERENCES public.regions(id);
+
+
+--
+-- TOC entry 3568 (class 0 OID 0)
+-- Dependencies: 5
+-- Name: SCHEMA public; Type: ACL; Schema: -; Owner: postgres
+--
+
+REVOKE USAGE ON SCHEMA public FROM PUBLIC;
+GRANT ALL ON SCHEMA public TO PUBLIC;
+
+
+-- Completed on 2025-07-18 12:52:39 UTC
+
+--
+-- PostgreSQL database dump complete
+--
+

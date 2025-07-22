@@ -230,6 +230,9 @@ POSTGRES_PASSWORD=your_secure_password
 ```shell
 cd ~/docker-service/pgadmin
 
+# Create backup directory and set proper permissions
+sudo mkdir -p container-data/backup && sudo chown -R $USER:$USER container-data && sudo chmod -R 755 container-data
+
 # Setup environment file
 cp .sample.env .env
 nano .env
