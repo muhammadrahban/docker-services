@@ -1,0 +1,37 @@
+# ----------------------------------------------------------------------------------------------------------
+# LiveKit Egress — records rooms to MP4 (writes to the host RECORDINGS_PATH folder).
+# Part of the shared docker-service platform (Traefik reverse-proxy network).
+# ----------------------------------------------------------------------------------------------------------
+# WARNING:
+# This file is for local development and staging environments only.
+# DO NOT USE THIS FILE IN PRODUCTION ENVIRONMENTS.
+# ----------------------------------------------------------------------------------------------------------
+#
+# NOTE:
+# Egress is a background worker (no HTTP endpoint), so it is NOT routed through Traefik.
+# It joins the shared reverse-proxy network so it can reach LiveKit and Redis by container name.
+# ----------------------------------------------------------------------------------------------------------
+
+services:
+
+  service-egress:
+    container_name: service-egress
+    image: livekit/egress:latest
+    restart: unless-stopped
+    environment:
+      EGRESS_CONFIG_FILE: /etc/egress.yaml
+    volumes:
+      - ./application/egress.yaml:/etc/egress.yaml:ro
+      # MP4 files land here; mapped to the project recordings folder on the host
+      - ${RECORDINGS_PATH}:/out
+    cap_add:
+      - SYS_ADMIN
+    networks:
+      - reverse-proxy
+
+#  =========================================================================================================
+#  Shared reverse-proxy network (created once: docker network create reverse-proxy)
+#  =========================================================================================================
+networks:
+  reverse-proxy:
+    external: true

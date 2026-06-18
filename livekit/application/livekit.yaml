@@ -1,0 +1,15 @@
+# LiveKit server configuration (with Redis so Egress works)
+port: 7880
+rtc:
+  tcp_port: 7881
+  port_range_start: 51000
+  port_range_end: 51100
+  use_external_ip: false
+
+# API key/secret — must match the app .env (LIVEKIT_API_KEY / LIVEKIT_API_SECRET)
+keys:
+  devkey: secret
+
+# Redis is required for Egress to work (service name on the reverse-proxy network)
+redis:
+  address: service-livestream-redis:6379

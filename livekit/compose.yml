@@ -1,0 +1,48 @@
+# ----------------------------------------------------------------------------------------------------------
+# LiveKit server — WebRTC SFU + signaling (WebSocket).
+# Part of the shared docker-service platform (Traefik reverse-proxy network).
+# ----------------------------------------------------------------------------------------------------------
+# WARNING:
+# This file is for local development and staging environments only.
+# DO NOT USE THIS FILE IN PRODUCTION ENVIRONMENTS.
+# ----------------------------------------------------------------------------------------------------------
+
+services:
+
+  service-livekit:
+    container_name: service-livekit
+    image: livekit/livekit-server:latest
+    restart: unless-stopped
+    command: --config /etc/livekit.yaml
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=reverse-proxy"
+      # HTTP Router (redirects to HTTPS)
+      - "traefik.http.routers.service-livekit.entrypoints=http"
+      - "traefik.http.routers.service-livekit.rule=Host(`${TRAEFIK_HOSTNAME}`)"
+      - "traefik.http.middlewares.service-livekit-https-redirect.redirectscheme.scheme=https"
+      - "traefik.http.routers.service-livekit.middlewares=service-livekit-https-redirect"
+      # HTTPS Router — terminates TLS and proxies the WebSocket signaling (WSS -> WS)
+      - "traefik.http.routers.service-livekit-secure.entrypoints=https"
+      - "traefik.http.routers.service-livekit-secure.rule=Host(`${TRAEFIK_HOSTNAME}`)"
+      - "traefik.http.routers.service-livekit-secure.tls=true"
+      - "traefik.http.services.service-livekit.loadbalancer.server.port=7880"
+      - "traefik.http.services.service-livekit.loadbalancer.server.scheme=http"
+    ports:
+      # Signaling / API (WebSocket) — kept for direct local access alongside Traefik
+      - "127.0.0.2:7880:7880"
+      # RTC TCP fallback — must be exposed directly (WebRTC media cannot go through the HTTP proxy)
+      - "127.0.0.2:7881:7881"
+      # RTC media (UDP) — kept on all interfaces so ICE candidates are reachable
+      - "51000-51100:51000-51100/udp"
+    volumes:
+      - ./application/livekit.yaml:/etc/livekit.yaml:ro
+    networks:
+      - reverse-proxy
+
+#  =========================================================================================================
+#  Shared reverse-proxy network (created once: docker network create reverse-proxy)
+#  =========================================================================================================
+networks:
+  reverse-proxy:
+    external: true

@@ -1,0 +1,31 @@
+# ----------------------------------------------------------------------------------------------------------
+# Redis — required so LiveKit and Egress can coordinate jobs.
+# Part of the shared docker-service platform (Traefik reverse-proxy network).
+# ----------------------------------------------------------------------------------------------------------
+# WARNING:
+# This file is for local development and staging environments only.
+# DO NOT USE THIS FILE IN PRODUCTION ENVIRONMENTS.
+# ----------------------------------------------------------------------------------------------------------
+#
+# NOTE:
+# This is an internal TCP backend (no HTTP endpoint), so it is NOT routed through Traefik.
+# It simply joins the shared reverse-proxy network so LiveKit and Egress can reach it by
+# container name (service-livestream-redis:6379).
+# ----------------------------------------------------------------------------------------------------------
+
+services:
+
+  service-livestream-redis:
+    container_name: service-livestream-redis
+    image: redis:7-alpine
+    restart: unless-stopped
+    command: redis-server --bind 0.0.0.0
+    networks:
+      - reverse-proxy
+
+#  =========================================================================================================
+#  Shared reverse-proxy network (created once: docker network create reverse-proxy)
+#  =========================================================================================================
+networks:
+  reverse-proxy:
+    external: true

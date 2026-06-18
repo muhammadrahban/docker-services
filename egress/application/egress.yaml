@@ -1,0 +1,17 @@
+# LiveKit Egress configuration
+# Connects to the same Redis as the LiveKit server and writes recordings locally.
+api_key: devkey
+api_secret: secret
+ws_url: ws://service-livekit:7880
+insecure: true
+
+logging:
+  level: info
+  json: false
+
+redis:
+  address: service-livestream-redis:6379
+
+# Recordings are written to /out inside the container, which maps to the
+# RECORDINGS_PATH host folder (the Opic-Livestream project recordings dir).
+# No S3/cloud upload — files stay on disk.

@@ -16,7 +16,7 @@ services:
       dockerfile: Dockerfile
     restart: unless-stopped
     ports:
-      - "3306:3306"
+      - "3307:3306"
     networks:
       - reverse-proxy
     volumes:
