@@ -14,16 +14,35 @@
 
 services:
 
+  # One-shot init: the egress process runs as a non-root user (uid 1001, gid 0),
+  # so the shared livekit-hls volume must be group-writable (gid 0) for egress to
+  # create per-room HLS subdirectories. This fixes the volume perms before egress
+  # starts, on every `docker compose up`.
+  service-egress-hls-init:
+    image: alpine:3
+    command: sh -c "mkdir -p /hls && chgrp -R 0 /hls && chmod -R 2775 /hls"
+    volumes:
+      - livekit-hls:/hls
+    restart: "no"
+    networks:
+      - reverse-proxy
+
   service-egress:
     container_name: service-egress
     image: livekit/egress:latest
     restart: unless-stopped
+    depends_on:
+      service-egress-hls-init:
+        condition: service_completed_successfully
     environment:
       EGRESS_CONFIG_FILE: /etc/egress.yaml
     volumes:
       - ./application/egress.yaml:/etc/egress.yaml:ro
       # MP4 files land here; mapped to the project recordings folder on the host
       - ${RECORDINGS_PATH}:/out
+      # LL-HLS segments + playlists land here; shared with the hls-origin nginx
+      # via the external `livekit-hls` docker volume (created once, see below).
+      - livekit-hls:/hls
     cap_add:
       - SYS_ADMIN
     networks:
@@ -34,4 +53,12 @@ services:
 #  =========================================================================================================
 networks:
   reverse-proxy:
+    external: true
+
+#  =========================================================================================================
+#  Shared HLS volume (created once: docker volume create livekit-hls)
+#  Egress writes segments here; the hls-origin service serves them.
+#  =========================================================================================================
+volumes:
+  livekit-hls:
     external: true

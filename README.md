@@ -8,6 +8,8 @@ This document provides a comprehensive step-by-step guide for setting up a compl
 
 ## 🚀 Services Included
 
+### Core Platform
+
 - **Traefik** - Reverse proxy with SSL termination
 - **PostgreSQL** - Database server
 - **PgAdmin** - PostgreSQL administration interface
@@ -16,6 +18,14 @@ This document provides a comprehensive step-by-step guide for setting up a compl
 - **MinIO** - S3-compatible object storage
 - **Mailpit** - Email testing tool
 - **Portainer** - Docker container management interface
+
+### LiveKit Live-Streaming Stack
+
+- **LiveKit** - WebRTC SFU + signaling server (WSS) for real-time audio/video
+- **LiveKit Redis** - Internal Redis used by LiveKit & Egress to coordinate jobs
+- **Egress** - Records LiveKit rooms to MP4 and produces LL-HLS segments
+- **HLS Origin** - Nginx origin that serves the LL-HLS playlists/segments Egress writes
+- **HLS CDN** - Public, viewer-facing Nginx edge cache in front of the HLS origin
 
 ---
 
@@ -120,6 +130,13 @@ git clone git@github.com:yourorg/mailpit mailpit
 
 # Clone Portainer for container management
 git clone git@github.com:yourorg/portainer portainer
+
+# Clone LiveKit live-streaming stack
+git clone git@github.com:yourorg/livekit livekit
+git clone git@github.com:yourorg/livekit-redis livekit-redis
+git clone git@github.com:yourorg/egress egress
+git clone git@github.com:yourorg/hls-origin hls-origin
+git clone git@github.com:yourorg/hls-cdn hls-cdn
 ```
 
 **Alternative:** If SSH is not configured, use HTTPS:
@@ -136,6 +153,19 @@ Create the shared reverse-proxy network:
 ```shell
 docker network create reverse-proxy
 ```
+
+### 4. Create Shared HLS Docker Volume
+
+The LiveKit Egress service writes LL-HLS segments into a shared Docker volume
+that the HLS Origin reads from. Create it once before starting the streaming
+stack:
+
+```shell
+docker volume create livekit-hls
+```
+
+> **Note:** Both `egress/compose.yml` and `hls-origin/compose.yml` reference this
+> volume as `external: true`, so it MUST exist before those services start.
 
 ---
 
@@ -169,11 +199,14 @@ mkcert \
   s3api.network.local.com \
   mail.network.local.com \
   portainer.network.local.com \
+  livekit.network.local.com \
+  hls.network.local.com \
   "*.network.local.com"
 
 # Move certificates to correct location
-mv traefik.network.local.com+6.pem container-data/certificates/selfsigned.crt
-mv traefik.network.local.com+6-key.pem container-data/certificates/selfsigned.key
+# (the +N suffix in the filename reflects the number of extra SANs above)
+mv traefik.network.local.com+8.pem container-data/certificates/selfsigned.crt
+mv traefik.network.local.com+8-key.pem container-data/certificates/selfsigned.key
 ```
 
 ---
@@ -346,6 +379,155 @@ ADMIN_PASSWORD=your_admin_password
 
 ---
 
+## 🎥 LiveKit Live-Streaming Stack Configuration
+
+The LiveKit stack provides real-time WebRTC streaming plus recording (MP4) and
+low-latency HLS (LL-HLS) playback. The pieces work together like this:
+
+```
+Publisher ──WSS──> LiveKit ──> Egress ──┬──> MP4   (recordings, host folder)
+                                         └──> HLS   (livekit-hls volume)
+                                                       │
+                              HLS Origin (nginx) ──────┘
+                                     │
+                              HLS CDN (nginx edge cache) ──> Viewers
+
+LiveKit & Egress both coordinate jobs through LiveKit Redis.
+```
+
+### Project Bootpath (Important)
+
+The Egress service writes MP4 recordings into a **host folder** that belongs to
+your application project (the `Opic-Livestream` Laravel app). This path is the
+"bootpath" that links the platform to the application:
+
+```env
+# egress/.env
+RECORDINGS_PATH=/var/www/html/Opic-Livestream/recordings
+```
+
+Make sure this folder exists and is writable **before** starting Egress:
+
+```shell
+mkdir -p /var/www/html/Opic-Livestream/recordings
+sudo chown -R $USER:$USER /var/www/html/Opic-Livestream/recordings
+chmod -R 775 /var/www/html/Opic-Livestream/recordings
+```
+
+> Adjust the path if your application lives somewhere else — it must match
+> `RECORDINGS_PATH` in `egress/.env`.
+
+### 9. Configure LiveKit Server
+
+```shell
+cd ~/docker-service/livekit
+
+# Setup environment file
+cp .sample.env .env
+nano .env
+```
+
+Configure the LiveKit hostname:
+
+```env
+TRAEFIK_HOSTNAME=livekit.network.local.com
+```
+
+The API key/secret and Redis address live in the config file at
+[livekit/application/livekit.yaml](livekit/application/livekit.yaml). The keys
+**must match** the application `.env` (`LIVEKIT_API_KEY` / `LIVEKIT_API_SECRET`):
+
+```yaml
+keys:
+  devkey: secret
+
+redis:
+  address: service-livestream-redis:6379
+```
+
+> **Ports:** LiveKit exposes `7880` (signaling/API), `7881` (RTC TCP fallback)
+> and the UDP range `51000-51100` for WebRTC media. The UDP range is published
+> on all interfaces because ICE candidates must be directly reachable — WebRTC
+> media cannot pass through the Traefik HTTP proxy.
+
+### 10. Configure LiveKit Redis
+
+LiveKit Redis has **no environment file** and is **not routed through Traefik**.
+It is an internal TCP backend reachable by container name
+(`service-livestream-redis:6379`). No configuration is required — just start it.
+
+### 11. Configure Egress (Recorder)
+
+```shell
+cd ~/docker-service/egress
+
+# Setup environment file
+cp .sample.env .env
+nano .env
+```
+
+Set the host recordings folder (the project bootpath described above):
+
+```env
+RECORDINGS_PATH=/var/www/html/Opic-Livestream/recordings
+```
+
+The API key/secret and WebSocket URL live in
+[egress/application/egress.yaml](egress/application/egress.yaml) and must match
+the LiveKit config:
+
+```yaml
+api_key: devkey
+api_secret: secret
+ws_url: ws://service-livekit:7880
+redis:
+  address: service-livestream-redis:6379
+```
+
+> **File permissions:** The Egress process runs as a **non-root user (uid 1001,
+> gid 0)**. Because of this it cannot write to a root-owned HLS volume. The
+> `service-egress-hls-init` one-shot container in `egress/compose.yml`
+> automatically fixes the `livekit-hls` volume permissions
+> (`chgrp -R 0 /hls && chmod -R 2775 /hls`) on every `docker compose up`, so
+> Egress can create per-room HLS subdirectories. You normally don't need to
+> touch this — just be aware that Egress depends on that init step completing
+> successfully. Egress also needs the `SYS_ADMIN` capability (already set in the
+> compose file) for the headless Chrome recorder.
+
+### 12. Configure HLS Origin
+
+HLS Origin has **no environment file** and is **not routed through Traefik** —
+it is an internal origin that the CDN reads from by container name
+(`service-hls-origin:80`). It mounts the shared `livekit-hls` volume
+**read-only** and serves the playlists/segments via
+[hls-origin/application/nginx.conf](hls-origin/application/nginx.conf).
+
+No configuration is required — just ensure the `livekit-hls` volume exists
+(created in step 4).
+
+### 13. Configure HLS CDN (Viewer Endpoint)
+
+```shell
+cd ~/docker-service/hls-cdn
+
+# Setup environment file
+cp .sample.env .env
+nano .env
+```
+
+Configure the public HLS hostname that viewers connect to:
+
+```env
+TRAEFIK_HOSTNAME=hls.network.local.com
+```
+
+This is the **public LL-HLS endpoint**. It proxies and caches the HLS Origin
+responses (long cache for immutable segments, near-live cache for playlists) via
+[hls-cdn/application/nginx.conf](hls-cdn/application/nginx.conf). In production,
+point a real CDN (Cloudflare / CloudFront) at the same origin.
+
+---
+
 ## 🌐 Host Entries Configuration
 
 Update your local hosts file to route traffic to the correct IP:
@@ -371,6 +553,10 @@ Add the following entries:
 
 # Communication Services
 127.0.0.2        mail.network.local.com
+
+# LiveKit Live-Streaming Stack
+127.0.0.2        livekit.network.local.com
+127.0.0.2        hls.network.local.com
 
 # Additional services (add as needed)
 127.0.0.2        api.network.local.com
@@ -429,6 +615,36 @@ cd ~/docker-service/portainer
 docker compose up -d
 ```
 
+6. **Start the LiveKit live-streaming stack (in this exact order):**
+
+The streaming services have startup dependencies, so order matters:
+
+```shell
+# a) Redis first — LiveKit & Egress need it to coordinate jobs
+cd ~/docker-service/livekit-redis
+docker compose up -d
+
+# b) LiveKit server (connects to Redis)
+cd ~/docker-service/livekit
+docker compose up -d
+
+# c) Egress (depends on the hls-init step; needs the livekit-hls volume)
+cd ~/docker-service/egress
+docker compose up -d
+
+# d) HLS Origin (reads the livekit-hls volume that Egress writes to)
+cd ~/docker-service/hls-origin
+docker compose up -d
+
+# e) HLS CDN (public viewer endpoint; proxies the origin)
+cd ~/docker-service/hls-cdn
+docker compose up -d
+```
+
+> **Reminder:** Make sure both the `reverse-proxy` network and the `livekit-hls`
+> volume exist (steps 3 and 4) and that `RECORDINGS_PATH` in `egress/.env` points
+> to an existing, writable host folder before starting Egress.
+
 ### Verify All Services
 
 Check that all services are running:
@@ -454,6 +670,8 @@ Once all services are running, you can access them via HTTPS:
 | **MinIO API**         | https://s3api.network.local.com              | -                                       |
 | **Mailpit**           | https://mail.network.local.com               | No authentication                       |
 | **Portainer**         | https://portainer.network.local.com          | Create admin account on first visit     |
+| **LiveKit (WSS)**     | wss://livekit.network.local.com              | API key/secret: devkey / secret         |
+| **HLS Playback**      | https://hls.network.local.com                | No authentication (viewer endpoint)     |
 
 ### SSL Certificate Status
 
@@ -513,6 +731,30 @@ echo "Test email body" | mail -s "Test Subject" -S smtp=127.0.0.2:1025 test@exam
 # View emails at https://mail.network.local.com
 ```
 
+### Test the LiveKit Streaming Stack
+
+```shell
+# Confirm the shared HLS volume exists
+docker volume inspect livekit-hls
+
+# Verify LiveKit signaling is reachable (should return HTTP 200/426)
+curl -k -I https://livekit.network.local.com
+
+# Verify the HLS CDN edge is up (health endpoint)
+curl -k https://hls.network.local.com/healthz
+
+# Watch Egress pick up a recording job (start a recording from the app first)
+docker logs -f service-egress
+
+# List recorded MP4 files on the host (the project bootpath)
+ls -lah /var/www/html/Opic-Livestream/recordings
+```
+
+During a live session, viewers load the playlist from
+`https://hls.network.local.com/<roomName>/index.m3u8`. The CDN caches segments
+from the origin, which in turn serves the files Egress wrote to the
+`livekit-hls` volume.
+
 ---
 
 ## 🔧 Troubleshooting
@@ -548,6 +790,7 @@ echo "Test email body" | mail -s "Test Subject" -S smtp=127.0.0.2:1025 test@exam
    ```
 
 4. **Container startup issues:**
+
    ```shell
    # Check individual service logs
    docker logs service-postgresql
@@ -555,6 +798,29 @@ echo "Test email body" | mail -s "Test Subject" -S smtp=127.0.0.2:1025 test@exam
    docker logs service-phpmyadmin
    docker logs service-minio
    docker logs service-mailpit
+   ```
+
+5. **LiveKit / streaming issues:**
+
+   ```shell
+   # "volume livekit-hls not found" — create it, then restart egress/hls-origin
+   docker volume create livekit-hls
+
+   # Egress can't write HLS / permission denied — the init container fixes perms;
+   # confirm it completed successfully
+   docker logs service-egress-hls-init
+
+   # No MP4 files appearing — check RECORDINGS_PATH exists and is writable, and
+   # that it matches egress/.env
+   docker logs service-egress
+   ls -lah /var/www/html/Opic-Livestream/recordings
+
+   # Egress/LiveKit can't reach Redis — ensure redis is up and on the network
+   docker logs service-livestream-redis
+   docker exec service-livestream-redis redis-cli ping   # -> PONG
+
+   # WebRTC media not connecting — verify the UDP range 51000-51100 is open
+   sudo ufw status | grep 51000
    ```
 
 ### Service Health Checks
@@ -569,6 +835,8 @@ curl -k -I https://pga.network.local.com
 curl -k -I https://pma.network.local.com
 curl -k -I https://s3.network.local.com
 curl -k -I https://mail.network.local.com
+curl -k -I https://livekit.network.local.com
+curl -k https://hls.network.local.com/healthz
 ```
 
 ### Reset Everything
@@ -592,6 +860,9 @@ docker system prune -a --volumes
 # Recreate network
 docker network rm reverse-proxy
 docker network create reverse-proxy
+
+# Recreate the shared HLS volume (removed by the prune above)
+docker volume create livekit-hls
 
 # Start services again following the startup order
 ```

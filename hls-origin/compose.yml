@@ -1,0 +1,43 @@
+# ----------------------------------------------------------------------------------------------------------
+# HLS Origin — serves the LL-HLS playlists (.m3u8) and segments (.ts/.m4s) that
+# LiveKit Egress writes to the shared `livekit-hls` volume.
+# Part of the shared docker-service platform (Traefik reverse-proxy network).
+# ----------------------------------------------------------------------------------------------------------
+# WARNING:
+# This file is for local development and staging environments only.
+# DO NOT USE THIS FILE IN PRODUCTION ENVIRONMENTS.
+# ----------------------------------------------------------------------------------------------------------
+#
+# NOTE:
+# This is the ORIGIN (source of truth) for HLS media. It is NOT meant to be hit
+# directly by viewers — the `hls-cdn` edge cache sits in front of it and is the
+# public endpoint. The origin only joins the reverse-proxy network so the CDN
+# can reach it by container name (service-hls-origin:80).
+# ----------------------------------------------------------------------------------------------------------
+
+services:
+
+  service-hls-origin:
+    container_name: service-hls-origin
+    image: nginx:1.27-alpine
+    restart: unless-stopped
+    volumes:
+      - ./application/nginx.conf:/etc/nginx/nginx.conf:ro
+      # Read-only mount of the same volume Egress writes HLS segments into.
+      - livekit-hls:/hls:ro
+    networks:
+      - reverse-proxy
+
+#  =========================================================================================================
+#  Shared reverse-proxy network (created once: docker network create reverse-proxy)
+#  =========================================================================================================
+networks:
+  reverse-proxy:
+    external: true
+
+#  =========================================================================================================
+#  Shared HLS volume (created once: docker volume create livekit-hls)
+#  =========================================================================================================
+volumes:
+  livekit-hls:
+    external: true

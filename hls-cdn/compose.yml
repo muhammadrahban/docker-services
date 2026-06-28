@@ -1,0 +1,47 @@
+# ----------------------------------------------------------------------------------------------------------
+# HLS CDN edge — public, viewer-facing caching layer in front of the HLS origin.
+# Part of the shared docker-service platform (Traefik reverse-proxy network).
+# ----------------------------------------------------------------------------------------------------------
+# WARNING:
+# This file is for local development and staging environments only.
+# DO NOT USE THIS FILE IN PRODUCTION ENVIRONMENTS.
+# ----------------------------------------------------------------------------------------------------------
+#
+# NOTE:
+# This is the endpoint VIEWERS hit for LL-HLS playback. It proxies + caches the
+# `service-hls-origin` responses (long cache for immutable segments, no-cache
+# for playlists). Routed through Traefik over HTTPS at ${TRAEFIK_HOSTNAME}.
+# In production, point a real CDN (Cloudflare / CloudFront) at this same origin.
+# ----------------------------------------------------------------------------------------------------------
+
+services:
+
+  service-hls-cdn:
+    container_name: service-hls-cdn
+    image: nginx:1.27-alpine
+    restart: unless-stopped
+    volumes:
+      - ./application/nginx.conf:/etc/nginx/nginx.conf:ro
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=reverse-proxy"
+      # HTTP Router (redirects to HTTPS)
+      - "traefik.http.routers.service-hls-cdn.entrypoints=http"
+      - "traefik.http.routers.service-hls-cdn.rule=Host(`${TRAEFIK_HOSTNAME}`)"
+      - "traefik.http.middlewares.service-hls-cdn-https-redirect.redirectscheme.scheme=https"
+      - "traefik.http.routers.service-hls-cdn.middlewares=service-hls-cdn-https-redirect"
+      # HTTPS Router — terminates TLS and proxies the cached HLS responses
+      - "traefik.http.routers.service-hls-cdn-secure.entrypoints=https"
+      - "traefik.http.routers.service-hls-cdn-secure.rule=Host(`${TRAEFIK_HOSTNAME}`)"
+      - "traefik.http.routers.service-hls-cdn-secure.tls=true"
+      - "traefik.http.services.service-hls-cdn.loadbalancer.server.port=80"
+      - "traefik.http.services.service-hls-cdn.loadbalancer.server.scheme=http"
+    networks:
+      - reverse-proxy
+
+#  =========================================================================================================
+#  Shared reverse-proxy network (created once: docker network create reverse-proxy)
+#  =========================================================================================================
+networks:
+  reverse-proxy:
+    external: true
