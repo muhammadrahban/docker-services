@@ -35,8 +35,14 @@ services:
       - "127.0.0.2:7881:7881"
       # RTC media (UDP) — kept on all interfaces so ICE candidates are reachable
       - "51000-51100:51000-51100/udp"
+      # TURN/UDP — must be reachable on all interfaces so clients behind firewalls can connect
+      - "443:443/udp"
+      # Prometheus metrics endpoint — scraped by monitoring
+      - "127.0.0.2:6789:6789"
     volumes:
       - ./application/livekit.yaml:/etc/livekit.yaml:ro
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     networks:
       - reverse-proxy
 

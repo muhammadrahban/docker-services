@@ -1,0 +1,18 @@
+# ----------------------------------------------------------------------------------------------------------
+# RTMP ingress service — accepts publisher streams at rtmp://<host>/live/<room_name>
+# and makes them available for OpenCV runtime ingestion.
+# ----------------------------------------------------------------------------------------------------------
+services:
+
+  service-rtmp-ingress:
+    container_name: service-rtmp-ingress
+    image: bluenviron/mediamtx:latest
+    restart: unless-stopped
+    ports:
+      - "1935:1935"
+    networks:
+      - reverse-proxy
+
+networks:
+  reverse-proxy:
+    external: true
