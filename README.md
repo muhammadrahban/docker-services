@@ -582,37 +582,37 @@ docker compose up -d --build --force-recreate
 
 ```shell
 cd ~/docker-service/postgresql
-docker compose up -d
+docker compose up -d --build --force-recreate
 
 cd ~/docker-service/mysql
-docker compose up -d
+docker compose up -d --build --force-recreate
 ```
 
 3. **Start admin interfaces:**
 
 ```shell
 cd ~/docker-service/pgadmin
-docker compose up -d
+docker compose up -d --build --force-recreate
 
 cd ~/docker-service/phpmyadmin
-docker compose up -d
+docker compose up -d --build --force-recreate
 ```
 
 4. **Start other services:**
 
 ```shell
 cd ~/docker-service/minio
-docker compose up -d
+docker compose up -d --build --force-recreate
 
 cd ~/docker-service/mailpit
-docker compose up -d
+docker compose up -d --build --force-recreate
 ```
 
 5. **Start Portainer:**
 
 ```shell
 cd ~/docker-service/portainer
-docker compose up -d
+docker compose up -d --build --force-recreate
 ```
 
 6. **Start the LiveKit live-streaming stack (in this exact order):**
@@ -622,23 +622,23 @@ The streaming services have startup dependencies, so order matters:
 ```shell
 # a) Redis first — LiveKit & Egress need it to coordinate jobs
 cd ~/docker-service/livekit-redis
-docker compose up -d
+docker compose up -d --build --force-recreate
 
 # b) LiveKit server (connects to Redis)
 cd ~/docker-service/livekit
-docker compose up -d
+docker compose up -d --build --force-recreate
 
 # c) Egress (depends on the hls-init step; needs the livekit-hls volume)
 cd ~/docker-service/egress
-docker compose up -d
+docker compose up -d --build --force-recreate
 
 # d) HLS Origin (reads the livekit-hls volume that Egress writes to)
 cd ~/docker-service/hls-origin
-docker compose up -d
+docker compose up -d --build --force-recreate
 
 # e) HLS CDN (public viewer endpoint; proxies the origin)
 cd ~/docker-service/hls-cdn
-docker compose up -d
+docker compose up -d --build --force-recreate
 ```
 
 > **Reminder:** Make sure both the `reverse-proxy` network and the `livekit-hls`
