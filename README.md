@@ -27,6 +27,12 @@ This document provides a comprehensive step-by-step guide for setting up a compl
 - **HLS Origin** - Nginx origin that serves the LL-HLS playlists/segments Egress writes
 - **HLS CDN** - Public, viewer-facing Nginx edge cache in front of the HLS origin
 
+### OpenCV / CV Pipeline
+
+- **CV Pipeline** - OpenCV inference app with API, background worker, and LiveKit worker
+- Reuses **LiveKit** and **LiveKit Redis** from the shared platform
+- The app source is bind-mounted from `/var/www/html/cv-pipeline`, so code changes reflect in containers immediately
+
 ---
 
 ## 📋 Prerequisites
@@ -137,6 +143,9 @@ git clone git@github.com:yourorg/livekit-redis livekit-redis
 git clone git@github.com:yourorg/egress egress
 git clone git@github.com:yourorg/hls-origin hls-origin
 git clone git@github.com:yourorg/hls-cdn hls-cdn
+
+# Clone CV pipeline / OpenCV app
+git clone git@github.com:yourorg/cv-pipeline cv-pipeline
 ```
 
 **Alternative:** If SSH is not configured, use HTTPS:
@@ -558,6 +567,9 @@ Add the following entries:
 127.0.0.2        livekit.network.local.com
 127.0.0.2        hls.network.local.com
 
+# CV Pipeline / OpenCV App
+127.0.0.2        cv-pipeline.network.local.com
+
 # Additional services (add as needed)
 127.0.0.2        api.network.local.com
 127.0.0.2        web.network.local.com
@@ -645,6 +657,16 @@ docker compose up -d --build --force-recreate
 > volume exist (steps 3 and 4) and that `RECORDINGS_PATH` in `egress/.env` points
 > to an existing, writable host folder before starting Egress.
 
+7. **Start the CV Pipeline stack:**
+
+The CV Pipeline stack reuses the shared LiveKit server and LiveKit Redis, so
+start it after the LiveKit services are already up.
+
+```shell
+cd ~/docker-service/cv-pipeline
+docker compose up -d --build --force-recreate
+```
+
 ### Verify All Services
 
 Check that all services are running:
@@ -672,6 +694,7 @@ Once all services are running, you can access them via HTTPS:
 | **Portainer**         | https://portainer.network.local.com          | Create admin account on first visit     |
 | **LiveKit (WSS)**     | wss://livekit.network.local.com              | API key/secret: devkey / secret         |
 | **HLS Playback**      | https://hls.network.local.com                | No authentication (viewer endpoint)     |
+| **CV Pipeline**       | https://cv-pipeline.network.local.com        | App-specific auth / API config          |
 
 ### SSL Certificate Status
 

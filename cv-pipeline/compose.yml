@@ -1,0 +1,120 @@
+# ----------------------------------------------------------------------------------------------------------
+# CV pipeline / OpenCV inference stack.
+# Builds the app from /var/www/html/cv-pipeline and reuses the shared LiveKit
+# and Redis services that already run on the reverse-proxy network.
+# ----------------------------------------------------------------------------------------------------------
+# WARNING:
+# This file is for local development and staging environments only.
+# DO NOT USE THIS FILE IN PRODUCTION ENVIRONMENTS.
+# ----------------------------------------------------------------------------------------------------------
+
+name: docker-services-cv-pipeline
+
+services:
+
+  service-cv-pipeline-server:
+    container_name: service-cv-pipeline-server
+    build:
+      context: /var/www/html/cv-pipeline
+      dockerfile: dockerfiles/api.Dockerfile
+    env_file:
+      - /var/www/html/cv-pipeline/.env
+    restart: unless-stopped
+    command: opic_server
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=reverse-proxy"
+      - "traefik.http.routers.service-cv-pipeline.entrypoints=http"
+      - "traefik.http.routers.service-cv-pipeline.rule=Host(`${TRAEFIK_HOSTNAME}`)"
+      - "traefik.http.middlewares.service-cv-pipeline-https-redirect.redirectscheme.scheme=https"
+      - "traefik.http.routers.service-cv-pipeline.middlewares=service-cv-pipeline-https-redirect"
+      - "traefik.http.routers.service-cv-pipeline-secure.entrypoints=https"
+      - "traefik.http.routers.service-cv-pipeline-secure.rule=Host(`${TRAEFIK_HOSTNAME}`)"
+      - "traefik.http.routers.service-cv-pipeline-secure.tls=true"
+      - "traefik.http.services.service-cv-pipeline.loadbalancer.server.port=8000"
+      - "traefik.http.services.service-cv-pipeline.loadbalancer.server.scheme=http"
+    ports:
+      - "127.0.0.1:8000:8000"
+    volumes:
+      - /var/www/html/cv-pipeline:/workspace/pipeline
+      - /var/www/html/cv-pipeline/service_account.json:/workspace/keyfile.json:ro
+    environment:
+      CELERY_BROKER_URL: redis://service-livestream-redis:6379/0
+      CELERY_RESULT_BACKEND: redis://service-livestream-redis:6379/0
+      GOOGLE_APPLICATION_CREDENTIALS: /workspace/keyfile.json
+    depends_on:
+      - service-cv-pipeline-worker
+    networks:
+      - reverse-proxy
+
+  service-cv-pipeline-worker:
+    container_name: service-cv-pipeline-worker
+    build:
+      context: /var/www/html/cv-pipeline
+      dockerfile: dockerfiles/worker.Dockerfile
+    env_file:
+      - /var/www/html/cv-pipeline/.env
+    restart: unless-stopped
+    command: opic_celery_app
+    shm_size: '2gb'
+    volumes:
+      - /var/www/html/cv-pipeline:/workspace/pipeline
+      - /var/www/html/cv-pipeline/service_account.json:/workspace/keyfile.json:ro
+    environment:
+      CELERY_BROKER_URL: redis://service-livestream-redis:6379/0
+      CELERY_RESULT_BACKEND: redis://service-livestream-redis:6379/0
+      GOOGLE_APPLICATION_CREDENTIALS: /workspace/keyfile.json
+      LIVEKIT_URL: ws://service-livekit:7880
+    healthcheck:
+      test: "wget http://localhost:8000/health"
+      interval: 1m
+      timeout: 10s
+      retries: 3
+      start_period: 5s
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]
+    networks:
+      - reverse-proxy
+
+  service-cv-pipeline-live-worker:
+    container_name: service-cv-pipeline-live-worker
+    build:
+      context: /var/www/html/cv-pipeline
+      dockerfile: dockerfiles/worker.Dockerfile
+    env_file:
+      - /var/www/html/cv-pipeline/.env
+    restart: unless-stopped
+    command: opic_live_celery_app
+    shm_size: '2gb'
+    volumes:
+      - /var/www/html/cv-pipeline:/workspace/pipeline
+      - /var/www/html/cv-pipeline/service_account.json:/workspace/keyfile.json:ro
+    environment:
+      CELERY_BROKER_URL: redis://service-livestream-redis:6379/0
+      CELERY_RESULT_BACKEND: redis://service-livestream-redis:6379/0
+      GOOGLE_APPLICATION_CREDENTIALS: /workspace/keyfile.json
+      LIVEKIT_URL: ws://service-livekit:7880
+    healthcheck:
+      test: "wget http://localhost:8000/health"
+      interval: 1m
+      timeout: 10s
+      retries: 3
+      start_period: 5s
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]
+    networks:
+      - reverse-proxy
+
+networks:
+  reverse-proxy:
+    external: true
