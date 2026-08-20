@@ -27,7 +27,7 @@ services:
       - "traefik.http.routers.service-cv-pipeline.entrypoints=http"
       - "traefik.http.routers.service-cv-pipeline.rule=Host(`${TRAEFIK_HOSTNAME}`)"
       - "traefik.http.middlewares.service-cv-pipeline-https-redirect.redirectscheme.scheme=https"
-      - "traefik.http.middlewares.service-cv-pipeline-cors.headers.accesscontrolalloworiginlist=null"
+      - "traefik.http.middlewares.service-cv-pipeline-cors.headers.accesscontrolalloworiginlist=*"
       - "traefik.http.middlewares.service-cv-pipeline-cors.headers.accesscontrolallowmethods=GET,POST,PUT,PATCH,DELETE,OPTIONS"
       - "traefik.http.middlewares.service-cv-pipeline-cors.headers.accesscontrolallowheaders=*"
       - "traefik.http.middlewares.service-cv-pipeline-cors.headers.accesscontrolmaxage=86400"
